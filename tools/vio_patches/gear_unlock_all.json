@@ -1,0 +1,15 @@
+{
+  "name": "gear_unlock_all",
+  "purpose_es": "Todo el equipo de la tienda (armas, ropa, cargadores, accesorios) disponible desde el inicio, sin investigar mejoras de Gear. Pedido del usuario el 2026-10-13: 'Sí, siempre' (sin opción de lobby). Funciona en todas las tiendas porque todas pasan por Common/Config/Gear/Gear_Config_Set.sqf.",
+  "source": "proyecto (2026-10-13)",
+  "reviewed": "Ancla '_upgrades = _this select 2;' verificada 1 vez en las 14 fuentes del catálogo (CW 2.0.6, Weferlingen, Cam Lao Nam, Everon y la clásica). Solo cambia el nivel con que se registra cada objeto; precios y el árbol de mejoras quedan igual.",
+  "risks": "Las mejoras de Gear siguen existiendo y se pueden investigar, pero ya no desbloquean nada nuevo. Para volver atrás, quitar el parche del catálogo y reconstruir.",
+  "steps": [
+    {
+      "file": "Common/Config/Gear/Gear_Config_Set.sqf",
+      "action": "insert_after",
+      "anchor": "_upgrades = _this select 2;",
+      "text": "\n_upgrades = _upgrades apply {0}; //--- VIOC gear_unlock_all: todo el equipo de la tienda desde el inicio (copia configurada)"
+    }
+  ]
+}

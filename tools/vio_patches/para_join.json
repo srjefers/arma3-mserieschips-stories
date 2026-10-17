@@ -1,0 +1,216 @@
+{
+ "name": "para_join",
+ "purpose_es": "Saltar tu tambien con los paracaidistas (solo Tanoa; al final de su cadena). En el panel PEDIR: boton 'Saltar con ellos (yo tambien)' (pasa el tipo a Paracaidistas): antes de cobrar se comprueba que puedes subir (vivo, a pie o de pasajero en un vehiculo de tierra parado) y se te reserva un asiento; cuando el avion sale te sube a el con el equipo de un soldado normal del equipo (armas, ropa, cargadores; tus mapa/GPS/radio/brujula/reloj; tus gafas nocturnas si el no lleva) y un paracaidas dirigible (el del paquete si es dirigible, si no B_Parachute). Tu equipo de antes queda guardado: accion 'Recuperar mi equipo anterior' en la base, un FOB, un camion de municion, un campamento o a 200 m de tu HQ o de un pueblo tuyo. Saltas con el primero del equipo; 'Pulsa ESPACIO para abrir el paracaidas' (o la rueda); si no lo abres se abre solo a 160 m. Nadie es invulnerable: quien salta (jugador o IA, y quien baja del helicoptero) solo lleva un filtro de dano de CAIDA/CHOQUE (HandleDamage sin proyectil); balas, metralla y explosiones hacen dano normal. Al tocar tierra recibes la mochila del paracaidista. Si el aparato es alcanzado se te avisa ('El avion fue alcanzado! Salta ahora') y decides; si lo derriban contigo dentro, muerte y reaparicion normales. Si la operacion se cancela sin combate o el aparato se va a borrar, primero sales. Lobby 'VIOC: Saltar tu tambien con los paracaidistas': No / Solo en mis operaciones pedidas (por defecto) / + las de la IA si estoy a menos de 500 m de la base / + las de la IA desde cualquier lugar (accion 'UNIRSE AL SALTO' de 60 s, gratis).",
+ "source": "work/v6_build/para_join (2026-10-17): VIOC_para_join.sqf, src/server_block.sqf, make_patch.py, dryrun.py, lint.py; resultados en VIOC_specops.pj.sqf y VIOC_specops_request.pj.sqf",
+ "risks": "Ver work/v6_build/para_join/REPORT.txt. Sin probar en el juego.",
+ "test_in_game_es": "Ver work/v6_build/para_join/REPORT.txt.",
+ "steps": [
+  {
+   "file": "VIOC_para_join.sqf",
+   "action": "new_file",
+   "text": "/*\n\tVIOC_para_join.sqf - agregado por tools/vio_build.py (parche para_join; copia configurada, no es del autor de la mision).\n\tFuente: work/v6_build/para_join/.\n\n\tCliente de \"saltar con los paracaidistas\" (servidor en VIOC_specops.sqf, bloque \"VIOC para_join\"):\n\t  - VIOC_PJ_fnc_board (lo manda el servidor): guarda tu equipo (VIOC_PJ_SAVED, una vez), te pone el de un paracaidista\n\t    del equipo (sus armas, ropa y cargadores) con TUS objetos (mapa, GPS/terminal, radio, brujula, reloj; tus gafas de\n\t    vision nocturna si el no lleva) y un paracaidas dirigible a la espalda, y te sube al transporte (moveInCargo).\n\t  - Saltas con el primero del equipo (VIOC_PJ_fnc_jump). Si el aparato es ALCANZADO no se te obliga: aviso \"El avion\n\t    fue alcanzado! Salta ahora\" y decides tu (rueda: Saltar/Eject). Si lo DERRIBAN contigo dentro, vives o mueres como\n\t    diga el motor (sin proteccion ni salto automatico) y, si mueres, reapareces como cualquier muerte.\n\t  - En la caida: \"Pulsa ESPACIO (o la rueda: Abrir paracaidas)\"; si no lo abres, se abre solo a 160 m sobre el suelo\n\t    (Steerable_Parachute_F o el del paquete, como hacen las funciones de BIS: createVehicle + moveInDriver). No eres\n\t    invulnerable: solo se filtra el dano de CAIDA/CHOQUE (HandleDamage sin proyectil, VIOC_PJ_fnc_guard); balas,\n\t    metralla y explosiones te hacen dano normal en caida libre y bajo el paracaidas. Al tocar tierra recibes la mochila\n\t    del paracaidista (con su contenido).\n\t  - Oferta de los saltos de la IA (VIOC_PJ_fnc_offer): accion \"UNIRSE AL SALTO\" durante 60 s.\n\t  - Accion \"Recuperar mi equipo anterior\": donde puedes abrir MENU: Equipment (cuartel, camion de municion, FOB,\n\t    campamento/deposito), a menos de 200 m de tu HQ o de un pueblo tuyo (base avanzada). Gratis: es tu equipo.\n\t    Si mueres con el equipo de paracaidista, con \"Start with last Gear\" reapareces con el (es tu ultimo equipo) y\n\t    esta accion te sigue devolviendo el de antes del salto.\n\tSolo cliente (hasInterface). Parametro VIOC_PARA_JOIN (0 no, 1 solo mis pedidos, 2 + los de la IA cerca de mi base,\n\t3 + los de la IA desde cualquier lugar).\n\tConsola (Ejecucion local): VIOC_PJ_SAVED (equipo guardado), VIOC_PJ_RIDE (vuelo en curso), VIOC_PJ_OFFER (oferta)\n*/\nif (!hasInterface) exitWith {};\nif ((missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) <= 0) exitWith {};\n\nVIOC_PJ_OPEN_AGL = 160;\t//--- el paracaidas se abre solo por debajo de esta altura sobre el suelo (o el agua)\n\n//--- Altura sobre el suelo o el agua.\nVIOC_PJ_fnc_agl = {\n\tprivate _p = getPosASL player;\n\tif (surfaceIsWater _p) exitWith {_p select 2};\n\t(getPosATL player) select 2\n};\n\n//--- Filtro de dano SOLO de caida/choque (igual que VIOC_fnc_soFallGuard del servidor; HandleDamage solo dispara donde la\n//--- unidad es local: el jugador, aqui). Sin proyectil (\"\") y origen nadie / tu / tu paracaidas / el aparato = sin dano\n//--- (se devuelve el que ya tenias); con proyectil (balas, metralla, explosiones) no se devuelve nada: dano normal.\nVIOC_PJ_fnc_guard = {\n\tparams [\"_u\", [\"_air\", objNull], [\"_secs\", 300]];\n\tif (isNull _u || {!local _u}) exitWith {};\n\t_u setVariable [\"vioc_fg_until\", time + _secs];\n\t_u setVariable [\"vioc_fg_air\", _air];\n\tif ((_u getVariable [\"vioc_fg_eh\", -1]) >= 0) exitWith {};\n\tprivate _id = _u addEventHandler [\"HandleDamage\", {\n\t\tparams [\"_unit\", \"\", \"\", \"_source\", \"_projectile\", \"_hitIndex\", \"\", \"_hitPoint\"];\n\t\tif ((_projectile isEqualTo \"\") && {time < (_unit getVariable [\"vioc_fg_until\", 0])} && {(isNull _source) || {_source == _unit} || {_source == (vehicle _unit)} || {_source isKindOf \"ParachuteBase\"} || {_source == (_unit getVariable [\"vioc_fg_air\", objNull])}}) then {\n\t\t\tprivate _cur = damage _unit;\n\t\t\tif (_hitIndex >= 0 && {_hitPoint != \"\"}) then {\n\t\t\t\tprivate _h = _unit getHitPointDamage _hitPoint;\n\t\t\t\tif (!isNil \"_h\") then {_cur = _h};\n\t\t\t};\n\t\t\t_cur\n\t\t}\n\t}];\n\t_u setVariable [\"vioc_fg_eh\", _id];\n};\n//--- Quita el filtro (HandleDamage puesto al jugador seguiria tras reaparecer: se quita al aterrizar o al morir).\nVIOC_PJ_fnc_guardOff = {\n\tparams [\"_u\"];\n\tif (isNull _u) exitWith {};\n\tprivate _id = _u getVariable [\"vioc_fg_eh\", -1];\n\tif (_id >= 0) then {_u removeEventHandler [\"HandleDamage\", _id]; _u setVariable [\"vioc_fg_eh\", -1]};\n\t_u setVariable [\"vioc_fg_until\", 0];\n};\n\n//--- Mensaje del servidor (si el cliente de PEDIR no esta, aqui).\nVIOC_PJ_fnc_msg = {\n\tparams [\"_t\"];\n\thint _t;\n\tsystemChat format [\"[Paracaidistas] %1\", _t];\n};\n\n//--- Subir al transporte con equipo de paracaidista (lo manda el servidor, VIOC_fnc_pjSend).\nVIOC_PJ_fnc_board = {\n\tparams [\"_veh\", \"_lo\", \"_chute\", \"_label\"];\n\t[_veh, _lo, _chute, _label] spawn {\n\t\tparams [\"_veh\", \"_lo\", \"_chute\", \"_label\"];\n\t\tif (!alive player || {isNull _veh} || {!alive _veh}) exitWith {};\n\t\tif (!isNil \"VIOC_PJ_RIDE\") exitWith {[\"Ya vas en un salto.\"] call VIOC_PJ_fnc_msg};\n\t\tVIOC_PJ_RIDE = [_veh];\n\t\tprivate _old = getUnitLoadout player;\n\t\tprivate _saved = isNil \"VIOC_PJ_SAVED\";\n\t\tif (_saved) then {VIOC_PJ_SAVED = _old};\n\t\t//--- el equipo de un soldado del equipo, con tus objetos y el paracaidas a la espalda\n\t\tprivate _new = if (_lo isEqualType [] && {count _lo >= 10}) then {+_lo} else {+_old};\n\t\tprivate _tbp = +(_new param [5, []]);\n\t\tprivate _ai = +(_new param [9, []]);\n\t\tprivate _mine = _old param [9, []];\n\t\tif (count _ai < 6) then {_ai resize 6; _ai = _ai apply {if (isNil \"_x\") then {\"\"} else {_x}}};\n\t\t{if ((_mine param [_x, \"\"]) isEqualType \"\" && {(_mine param [_x, \"\"]) != \"\"}) then {_ai set [_x, _mine select _x]}} forEach [0, 1, 2, 3, 4];\n\t\tif ((_ai param [5, \"\"]) isEqualTo \"\") then {_ai set [5, _mine param [5, \"\"]]};\n\t\t_new set [9, _ai];\n\t\t_new set [5, [_chute param [0, \"B_Parachute\"], []]];\n\t\tif (vehicle player != player) then {moveOut player; sleep 0.3};\n\t\tplayer setUnitLoadout _new;\n\t\tplayer moveInCargo _veh;\n\t\tsleep 0.5;\n\t\tif (vehicle player != _veh && {alive _veh}) then {player moveInCargo _veh; sleep 0.5};\n\t\tif (vehicle player != _veh) exitWith {\n\t\t\tplayer setUnitLoadout _old;\n\t\t\tif (_saved) then {VIOC_PJ_SAVED = nil};\n\t\t\tVIOC_PJ_RIDE = nil;\n\t\t\t[\"No pudiste subir al transporte (sin sitio o ya no esta). Tu equipo no cambio.\"] call VIOC_PJ_fnc_msg;\n\t\t};\n\t\thint parseText format [\"<t size='1.1' color='#ffb27f'>Salto de paracaidistas</t><br/><br/><t align='left'>Vas en el transporte de %1, con equipo de paracaidista (tu equipo de antes esta guardado: accion 'Recuperar mi equipo anterior' en la base).<br/><br/>Saltas con el equipo sobre la zona de salto. En la caida: <t color='#76F563'>Pulsa ESPACIO para abrir el paracaidas</t> (o la rueda del raton: Abrir paracaidas). Si no lo abres, se abre solo a %2 m.</t>\", _label, VIOC_PJ_OPEN_AGL];\n\t\t//--- mientras vas dentro: si el aparato es alcanzado y aun vuela alto, se te avisa (no se te saca): decides tu\n\t\tprivate _warned = false;\n\t\twaitUntil {\n\t\t\tsleep 0.25;\n\t\t\tif (!_warned && {vehicle player == _veh} && {alive _veh} && {(damage _veh > 0.3) || {!canMove _veh} || {!alive (driver _veh)}} && {(call VIOC_PJ_fnc_agl) > 60}) then {\n\t\t\t\t_warned = true;\n\t\t\t\thint parseText \"<t size='1.3' color='#F56363'>¡El avión fue alcanzado! Salta ahora</t><br/>(rueda: Saltar/Eject)\";\n\t\t\t};\n\t\t\t(vehicle player != _veh) || {!alive player}\n\t\t};\n\t\t//--- si el aparato fue derribado (destruido), no hay ni salto ni proteccion: lo que diga el motor\n\t\tif (alive player && {alive _veh}) then {[_tbp, _chute param [1, \"Steerable_Parachute_F\"], _veh] call VIOC_PJ_fnc_fall};\n\t\tVIOC_PJ_RIDE = nil;\n\t};\n};\n\n//--- Salir por detras y debajo del aparato (como los paracaidistas IA), con el filtro de dano de caida/choque.\nVIOC_PJ_fnc_doJump = {\n\tparams [\"_veh\"];\n\tif (vehicle player != _veh) exitWith {};\n\tprivate _back = ((sizeOf (typeOf _veh)) * 0.45) max 8;\n\tprivate _p = _veh modelToWorldWorld [0, -_back, -4];\n\t[player, _veh, 300] call VIOC_PJ_fnc_guard;\n\tmoveOut player;\n\tplayer setPosASL _p;\n\tplayer setVelocity ((velocity _veh) vectorMultiply 0.3);\n};\n\n//--- Orden del servidor: saltar con el equipo (o bajar si el aparato esta en tierra).\nVIOC_PJ_fnc_jump = {\n\tparams [\"_veh\"];\n\tif (isNull _veh || {vehicle player != _veh}) exitWith {};\n\t[_veh] spawn {\n\t\tparams [\"_veh\"];\n\t\tprivate _t = time + 120;\n\t\twaitUntil {sleep 0.25; (vehicle player != _veh) || {!alive player} || {((getPosATL _veh) select 2) > 60} || {isTouchingGround _veh && {(speed _veh) < 3}} || {time > _t}};\n\t\tif (vehicle player != _veh || {!alive player}) exitWith {};\n\t\tif (isTouchingGround _veh && {(speed _veh) < 3}) then {moveOut player} else {[_veh] call VIOC_PJ_fnc_doJump};\n\t};\n};\n\n//--- Caida libre y paracaidas hasta el suelo. Solo se filtra el dano de caida/choque (VIOC_PJ_fnc_guard); el resto es normal.\nVIOC_PJ_fnc_fall = {\n\tparams [\"_tbp\", \"_chuteCls\", [\"_air\", objNull]];\n\tif ((call VIOC_PJ_fnc_agl) < 3 && {vehicle player == player}) exitWith {[_tbp] call VIOC_PJ_fnc_landed};\n\t[player, _air, 300] call VIOC_PJ_fnc_guard;\n\tif (vehicle player == player) then {hint parseText format [\"<t size='1.2' color='#76F563'>Pulsa ESPACIO para abrir el paracaidas</t><br/>(o la rueda del raton: Abrir paracaidas). Si no lo abres, se abre solo a %1 m.\", VIOC_PJ_OPEN_AGL]};\n\tprivate _opened = false;\n\tprivate _t = time + 300;\n\twaitUntil {\n\t\tsleep 0.1;\n\t\tprivate _v = vehicle player;\n\t\tif (_v != player && {_v isKindOf \"ParachuteBase\"}) then {\n\t\t\t_opened = true;\n\t\t} else {\n\t\t\tif (!_opened && {_v == player} && {(call VIOC_PJ_fnc_agl) < VIOC_PJ_OPEN_AGL} && {(call VIOC_PJ_fnc_agl) > 15}) then {\n\t\t\t\t//--- se abre solo (como BIS: crear el paracaidas en tu posicion y subirte de piloto, sin interrupciones)\n\t\t\t\tisNil {\n\t\t\t\t\tprivate _c = createVehicle [_chuteCls, getPosATL player, [], 0, \"CAN_COLLIDE\"];\n\t\t\t\t\tif (isNull _c) then {_c = createVehicle [\"Steerable_Parachute_F\", getPosATL player, [], 0, \"CAN_COLLIDE\"]};\n\t\t\t\t\t_c setPosASL (getPosASL player);\n\t\t\t\t\t_c setDir (getDir player);\n\t\t\t\t\tplayer moveInDriver _c;\n\t\t\t\t\t_c setVelocity [0, 0, -5];\n\t\t\t\t};\n\t\t\t\t_opened = true;\n\t\t\t\tprivate _bp = backpack player;\n\t\t\t\tif (_bp != \"\" && {getText (configFile >> \"CfgVehicles\" >> _bp >> \"ParachuteClass\") != \"\"}) then {removeBackpack player};\n\t\t\t\thint \"Paracaidas abierto automaticamente.\";\n\t\t\t};\n\t\t};\n\t\t!alive player || {(vehicle player == player) && {isTouchingGround player || {(call VIOC_PJ_fnc_agl) < 0.5}}} || {time > _t}\n\t};\n\t//--- muerto en el aire: se quita el filtro ya (la muerte y la reaparicion siguen el flujo normal de la mision)\n\tif (!alive player) exitWith {[player] call VIOC_PJ_fnc_guardOff};\n\tsleep 2;\n\t[player] call VIOC_PJ_fnc_guardOff;\n\tif (alive player) then {[_tbp] call VIOC_PJ_fnc_landed};\n};\n\n//--- En tierra: la mochila del paracaidista (con su contenido) en lugar del paracaidas.\nVIOC_PJ_fnc_landed = {\n\tparams [\"_tbp\"];\n\tif !(_tbp isEqualType [] && {count _tbp > 0}) exitWith {};\n\tprivate _bp = backpack player;\n\tif (_bp == \"\" || {getText (configFile >> \"CfgVehicles\" >> _bp >> \"ParachuteClass\") != \"\"}) then {\n\t\tprivate _lo = getUnitLoadout player;\n\t\t_lo set [5, _tbp];\n\t\tplayer setUnitLoadout _lo;\n\t};\n};\n\n//--- Oferta de un salto de la IA (60 s): accion \"UNIRSE AL SALTO\".\nVIOC_PJ_fnc_offer = {\n\tparams [\"_key\", \"_label\", [\"_secs\", 60]];\n\tif (!isNil \"VIOC_PJ_RIDE\") exitWith {};\n\tVIOC_PJ_OFFER = [_key, time + _secs, _label];\n\thint parseText format [\"<t size='1.1' color='#ffb27f'>Salto de paracaidistas</t><br/><br/>%1 sale ahora. Si quieres saltar con ellos usa la accion <t color='#76F563'>UNIRSE AL SALTO</t> (%2 s, gratis).\", _label, _secs];\n\tsystemChat format [\"[Paracaidistas] %1 sale ahora: accion UNIRSE AL SALTO (%2 s).\", _label, _secs];\n};\nVIOC_PJ_fnc_offerOk = {\n\t!isNil \"VIOC_PJ_OFFER\" && {isNil \"VIOC_PJ_RIDE\"} && {time < (VIOC_PJ_OFFER select 1)}\n};\nVIOC_PJ_fnc_accept = {\n\tif !(call VIOC_PJ_fnc_offerOk) exitWith {};\n\t[player, VIOC_PJ_OFFER select 0] remoteExecCall [\"VIOC_fnc_pjAccept\", 2];\n\tVIOC_PJ_OFFER = nil;\n\tsystemChat \"[Paracaidistas] Pedido enviado: subes al transporte en un momento.\";\n};\n\n//--- \"Recuperar mi equipo anterior\": en la base, FOB, camion de municion, campamento, o a 200 m de tu HQ o de un pueblo tuyo.\nVIOC_PJ_fnc_canRestore = {\n\tif (isNil \"VIOC_PJ_SAVED\" || {vehicle player != player}) exitWith {false};\n\tif ((missionNamespace getVariable [\"CTI_Base_GearInRange\", false]) || {missionNamespace getVariable [\"CTI_Base_GearInRange_Mobile\", false]} || {missionNamespace getVariable [\"CTI_Base_GearInRange_FOB\", false]} || {missionNamespace getVariable [\"CTI_Town_GearInRange\", false]}) exitWith {true};\n\tprivate _hq = CTI_P_SideJoined call CTI_CO_FNC_GetSideHQ;\n\tif (!isNil \"_hq\" && {_hq isEqualType objNull} && {!isNull _hq} && {(_hq distance2D player) < 200}) exitWith {true};\n\tprivate _sid = CTI_P_SideJoined call CTI_CO_FNC_GetSideID;\n\t((missionNamespace getVariable [\"CTI_Towns\", []]) findIf {((_x getVariable [\"cti_town_sideID\", -1]) == _sid) && {(_x distance2D player) < 200}}) >= 0\n};\nVIOC_PJ_fnc_restore = {\n\tif !(call VIOC_PJ_fnc_canRestore) exitWith {hint \"Recupera tu equipo en la base, un FOB, un camion de municion o un pueblo tuyo.\"};\n\tplayer setUnitLoadout VIOC_PJ_SAVED;\n\tVIOC_PJ_SAVED = nil;\n\thint \"Recuperaste el equipo que tenias antes del salto.\";\n};\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\t  VIOC_SPECOPS_PLAYER_COOLDOWN (min por jugador). Funciona aunque VIOC_SPECOPS = 0 (entonces la IA no lanza).",
+   "text": "\n\t- VIOC para_join: el jugador puede saltar con los paracaidistas (su pedido o, segun VIOC_PARA_JOIN, los de la IA de su\n\t  bando): bloque \"VIOC para_join\" mas abajo y cliente en VIOC_para_join.sqf."
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _exit = _start;\t//--- despues del salto el aparato vuelve por donde vino (no sigue sobre territorio enemigo)\n\tprivate _team = createGroup [_side, true];\n\tprivate _n = (_op get \"size\") min (_veh emptyPositions \"Cargo\");",
+   "text": "\tprivate _exit = _start;\t//--- despues del salto el aparato vuelve por donde vino (no sigue sobre territorio enemigo)\n\tprivate _team = createGroup [_side, true];\n\tprivate _n = (_op get \"size\") min ((_veh emptyPositions \"Cargo\") - (count (_op getOrDefault [\"pj\", []])));\t//--- VIOC para_join: asiento para el jugador que salta"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\t_op set [\"boarded\", {vehicle _x == _veh} count (units _team)];\n\t_team setBehaviour \"CARELESS\";\t//--- en el aire, que nada (ni LAMBS) les ordene bajar",
+   "text": "\n\t[_op, _veh, _team] call VIOC_fnc_pjBoard;\t//--- VIOC para_join: sube el jugador que lo pidio y oferta del salto de la IA"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\t\t\t\tif ([_u, _veh, _op get \"chute\"] call VIOC_fnc_soJump) then {_jumped = _jumped + 1};",
+   "text": "\n\t\t\t\tif (_jumped == 1 && {_state != \"hit\"}) then {[_veh] call VIOC_fnc_pjJump};\t//--- VIOC para_join: los jugadores saltan con el primero (si el aparato fue alcanzado, deciden ellos)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "\t_team leaveVehicle _veh;\n\tif (_jumped > 0) then {_team setBehaviour \"AWARE\"; _team setCombatMode \"YELLOW\"};",
+   "text": "\t[_veh, _op, _state != \"hit\"] call VIOC_fnc_pjEnd;\t//--- VIOC para_join: sin combate ningun jugador se queda dentro; si fue alcanzado, decide el\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t//--- el aparato no llego (se perdio o dio vueltas): se cancela y se devuelve el dinero\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t\t{deleteVehicle _x} forEach (units _cg);",
+   "text": "\t\t//--- el aparato no llego (se perdio o dio vueltas): se cancela y se devuelve el dinero\n\t\t//--- VIOC para_join: si va un jugador dentro, primero salta; el aparato no se borra con un jugador dentro\n\t\t[_veh, _cg, _op] spawn {params [\"_veh\", \"_cg\", \"_op\"]; [_veh, _op] call VIOC_fnc_pjEnd; [_veh] call VIOC_fnc_pjSafeDelete; {deleteVehicle _x} forEach (units _cg)};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif (alive _veh) then {\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t};\n\t{if (alive _x) then {deleteVehicle _x}} forEach (units _cg);",
+   "text": "\tif (alive _veh) then {[_veh] call VIOC_fnc_pjSafeDelete};\t//--- VIOC para_join: nunca con un jugador dentro\n\t{if (alive _x) then {deleteVehicle _x}} forEach (units _cg);"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tmoveOut _u;\n\t_u allowDamage false;",
+   "text": "\tmoveOut _u;\n\t[_u, _veh, 240] call VIOC_fnc_soFallGuard;\t//--- VIOC para_join: solo sin dano de caida/choque (antes allowDamage false)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "//--- no se pudo subir al paracaidas: sin dano hasta tocar tierra",
+   "text": "//--- no se pudo subir al paracaidas: sin dano de caida hasta tocar tierra (VIOC para_join: filtro de VIOC_fnc_soFallGuard)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\tsleep 3;\n\t\tif (alive _u) then {_u allowDamage true};",
+   "text": "\t\tsleep 3;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (alive _u && {vehicle _u != _u}) then {\n\t\t\t_u allowDamage false;",
+   "text": "if (alive _u && {vehicle _u != _u}) then {"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif (alive _u) then {\n\t\t_u allowDamage true;",
+   "text": "\tif (alive _u) then {\n\t\t[_u] call VIOC_fnc_soFallGuardOff;\t//--- VIOC para_join: en tierra, fin del filtro de caida"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "case (_state == \"landed\"): {\n\t\t\t{_x allowDamage false; unassignVehicle _x; moveOut _x} forEach _inside;",
+   "text": "case (_state == \"landed\"): {\n\t\t\t{[_x, _veh, 15] call VIOC_fnc_soFallGuard; unassignVehicle _x; moveOut _x} forEach _inside;\t//--- VIOC para_join: solo sin dano de choque al bajar"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "case (alive _veh && {_h < 15} && {(speed _veh) < 30}): {\n\t\t\t{_x allowDamage false; unassignVehicle _x; moveOut _x} forEach _inside;",
+   "text": "case (alive _veh && {_h < 15} && {(speed _veh) < 30}): {\n\t\t\t{[_x, _veh, 15] call VIOC_fnc_soFallGuard; unassignVehicle _x; moveOut _x} forEach _inside;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (alive _veh && {_h3 < 15}) then {\n\t\t\t\t\t{_x allowDamage false; unassignVehicle _x; moveOut _x} forEach _inside;",
+   "text": "if (alive _veh && {_h3 < 15}) then {\n\t\t\t\t\t{[_x, _veh, 15] call VIOC_fnc_soFallGuard; unassignVehicle _x; moveOut _x} forEach _inside;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\tsleep 4;\n\t\t{if (alive _x) then {_x allowDamage true}} forEach _inside;",
+   "text": "\t\tsleep 4;\n\t\t{[_x] call VIOC_fnc_soFallGuardOff} forEach _inside;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tparams [[\"_player\", objNull, [objNull]], [\"_want\", \"any\", [\"\"]], [\"_pos\", [], [[]]], [\"_join\", false, [false]], [\"_size\", 6, [0]], [\"_seen\", -1, [0]], [\"_cap\", 12, [0]]];",
+   "text": "\tparams [[\"_player\", objNull, [objNull]], [\"_want\", \"any\", [\"\"]], [\"_pos\", [], [[]]], [\"_join\", false, [false]], [\"_size\", 6, [0]], [\"_seen\", -1, [0]], [\"_cap\", 12, [0]], [\"_jump\", false, [false]]];\t//--- VIOC para_join: + _jump"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _r = [_player, _want, _pos, _join, _size, _seen, _cap] call VIOC_fnc_soPreqDo;",
+   "text": "\tprivate _r = [_player, _want, _pos, _join, _size, _seen, _cap, _jump] call VIOC_fnc_soPreqDo;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tparams [\"_player\", \"_want\", \"_pos\", \"_join\", \"_size\", \"_seen\", \"_cap\"];",
+   "text": "\tparams [\"_player\", \"_want\", \"_pos\", \"_join\", \"_size\", \"_seen\", \"_cap\", [\"_jump\", false]];"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\tif !(_want in [\"any\", \"para\", \"heli\", \"raid\"]) then {_want = \"any\"};",
+   "text": "\n\t//--- VIOC para_join: saltar con ellos = solo paracaidistas, y se comprueba ANTES de cobrar que puedes subir\n\tif (_jump) then {_want = \"para\"};\n\tprivate _pjWhy = if (_jump) then {[_player] call VIOC_fnc_pjCheck} else {\"\"};\n\tif (_pjWhy != \"\") exitWith {format [\"no puedes saltar con ellos: %1\", _pjWhy]};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _r = [_player, _side, _uid, _want, _town, _mode, _helper, _base, _pkgs, _join, _size, _seen, _cap] call VIOC_fnc_soPreqLaunch;",
+   "text": "\tprivate _r = [_player, _side, _uid, _want, _town, _mode, _helper, _base, _pkgs, _join, _size, _seen, _cap, _jump] call VIOC_fnc_soPreqLaunch;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tparams [\"_player\", \"_side\", \"_uid\", \"_want\", \"_town\", \"_mode\", \"_helper\", \"_base\", \"_pkgs\", \"_join\", \"_size\", \"_seen\", \"_cap\"];",
+   "text": "\tparams [\"_player\", \"_side\", \"_uid\", \"_want\", \"_town\", \"_mode\", \"_helper\", \"_base\", \"_pkgs\", \"_join\", \"_size\", \"_seen\", \"_cap\", [\"_jump\", false]];"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "[\"payer\", [\"player\", _grp, _uid, _price, _side]], [\"main\", _main], [\"tok\", _tok], [\"preq\", _uid], [\"join\", _join], [\"req\", _player], [\"cap\", _capEff]];",
+   "text": "\n\tif (_jump) then {_op set [\"pj\", [_player]]};\t//--- VIOC para_join: el jugador va en el avion"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\tif (_mode == \"point\") then {_after = _after + \" Sin pueblo cerca: aseguran la zona y se retiran a los 40 min.\"};",
+   "text": "\n\tif (_jump) then {_after = _after + \" Saltas con ellos: cuando salga el avion te subimos con equipo de paracaidista (el tuyo queda guardado).\"};\t//--- VIOC para_join"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "format [\"activo (modo %1, cada %2 min, %3 paquetes, mision %4).\", VIOC_SO_MODE, VIOC_SO_INTERVAL, count VIOC_SO_PACKAGES, [\"CW\", \"clasica\"] select VIOC_SO_VANILLA] call VIOC_fnc_soLog;",
+   "text": "//=====================================================================================================================\n//--- VIOC para_join: el JUGADOR salta con los paracaidistas (parametro VIOC_PARA_JOIN; cliente en VIOC_para_join.sqf).\n//---   - En su propio pedido de paracaidistas (\"Saltar con ellos (yo tambien)\" en el panel PEDIR): se valida ANTES de\n//---     cobrar que puede subir (vivo, consciente, a pie o de pasajero en un vehiculo de tierra parado) y se le reserva un\n//---     asiento; cuando el avion sale (VIOC_fnc_soDoPara), el servidor le manda subir (VIOC_PJ_fnc_board en SU maquina:\n//---     moveInCargo es local al jugador) con el equipo de un soldado normal del equipo (no el jefe ni el medico) y un\n//---     paracaidas dirigible.\n//---   - En las operaciones de paracaidistas de la IA de su bando (VIOC_PARA_JOIN 2 = si esta a menos de 500 m de la base\n//---     de salida, 3 = desde cualquier lugar): oferta \"UNIRSE AL SALTO\" de 60 s (gratis), validada otra vez aqui.\n//---   - Salta con el primero del equipo (VIOC_fnc_pjJump). Si la operacion se cancela sin combate o el aparato se va a\n//---     borrar, el jugador sale antes (VIOC_fnc_pjSafeDelete nunca borra un aparato con un jugador dentro). Si el aparato es\n//---     alcanzado NO se le obliga ni protege: se le avisa y decide; si lo derriban, vive o muere como diga el motor.\n//---   - Nadie es invulnerable: quien salta (jugador o IA) solo lleva un filtro de dano de caida/choque (VIOC_fnc_soFallGuard).\n//---   - El jugador no cuenta para ningun tope de las operaciones especiales ni cambia nada para las demas.\n//=====================================================================================================================\nVIOC_PJ_MODE = missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1];\nif !(VIOC_PJ_MODE isEqualType 0) then {VIOC_PJ_MODE = 1};\nVIOC_PJ_OPS = createHashMap;\t//--- ofertas de saltos de la IA: str token -> [operacion, aparato, fin de la oferta]\nVIOC_PJ_NEAR = 500;\t\t\t\t//--- con VIOC_PARA_JOIN = 2, distancia maxima a la base de salida\n\n//--- Filtro de dano SOLO de caida/choque para quien salta o desembarca (en lugar de allowDamage false): mientras dure la\n//--- ventana, un golpe sin proyectil (\"\" = caida, choque) cuyo origen es nadie, la unidad, su paracaidas o el aparato no\n//--- hace dano (se devuelve el dano que ya tenia esa parte); balas, metralla y explosiones (proyectil != \"\") hacen su\n//--- dano normal en caida libre y bajo el paracaidas. HandleDamage solo dispara donde la unidad es local (aqui: la IA\n//--- del servidor). Parametros de HandleDamage en 2.22: unit, selection, damage, source, projectile, hitPartIndex,\n//--- instigator, hitPoint, directHit, context. Si no devuelve nada, el motor hace lo de siempre.\nVIOC_fnc_soFallGuard = {\n\tparams [\"_u\", [\"_air\", objNull], [\"_secs\", 240]];\n\tif (isNull _u || {!local _u}) exitWith {};\n\t_u setVariable [\"vioc_fg_until\", time + _secs];\n\t_u setVariable [\"vioc_fg_air\", _air];\n\tif ((_u getVariable [\"vioc_fg_eh\", -1]) >= 0) exitWith {};\n\tprivate _id = _u addEventHandler [\"HandleDamage\", {\n\t\tparams [\"_unit\", \"\", \"\", \"_source\", \"_projectile\", \"_hitIndex\", \"\", \"_hitPoint\"];\n\t\tif ((_projectile isEqualTo \"\") && {time < (_unit getVariable [\"vioc_fg_until\", 0])} && {(isNull _source) || {_source == _unit} || {_source == (vehicle _unit)} || {_source isKindOf \"ParachuteBase\"} || {_source == (_unit getVariable [\"vioc_fg_air\", objNull])}}) then {\n\t\t\tprivate _cur = damage _unit;\n\t\t\tif (_hitIndex >= 0 && {_hitPoint != \"\"}) then {\n\t\t\t\tprivate _h = _unit getHitPointDamage _hitPoint;\n\t\t\t\tif (!isNil \"_h\") then {_cur = _h};\n\t\t\t};\n\t\t\t_cur\n\t\t}\n\t}];\n\t_u setVariable [\"vioc_fg_eh\", _id];\n};\nVIOC_fnc_soFallGuardOff = {\n\tparams [\"_u\"];\n\tif (isNull _u) exitWith {};\n\tprivate _id = _u getVariable [\"vioc_fg_eh\", -1];\n\tif (_id >= 0) then {_u removeEventHandler [\"HandleDamage\", _id]; _u setVariable [\"vioc_fg_eh\", -1]};\n\t_u setVariable [\"vioc_fg_until\", 0];\n};\n\n//--- \"\" si el jugador puede subir al transporte, si no el motivo.\nVIOC_fnc_pjCheck = {\n\tparams [\"_p\"];\n\tif (VIOC_PJ_MODE <= 0) exitWith {\"saltar con los paracaidistas esta desactivado en el lobby\"};\n\tif (!alive _p || {lifeState _p == \"INCAPACITATED\"}) exitWith {\"tienes que estar vivo y consciente\"};\n\tprivate _v = vehicle _p;\n\tif (_v != _p && {(driver _v == _p) || {_v isKindOf \"Air\"} || {(speed _v) > 5} || {!isTouchingGround _v}}) exitWith {\"bajate del vehiculo (o deja de conducirlo) para saltar con ellos\"};\n\t\"\"\n};\n\n//--- Equipo de un soldado normal del equipo (no el jefe, ni un medico; mejor sin lanzador), como se creo.\nVIOC_fnc_pjTemplate = {\n\tparams [\"_team\"];\n\tprivate _all = (units _team) select {alive _x};\n\tprivate _l = leader _team;\n\tprivate _c = _all select {(_x != _l) && {getNumber (configFile >> \"CfgVehicles\" >> (typeOf _x) >> \"attendant\") == 0}};\n\tprivate _r = _c select {secondaryWeapon _x == \"\"};\n\tprivate _u = objNull;\n\tif (count _r > 0) then {_u = selectRandom _r} else {if (count _c > 0) then {_u = selectRandom _c} else {if (count _all > 0) then {_u = _all select 0}}};\n\tif (isNull _u) exitWith {[]};\n\tgetUnitLoadout _u\n};\n\n//--- Paracaidas del jugador: [mochila, paracaidas] = la mochila del paracaidas del paquete si es dirigible\n//--- (CUP_T10_Parachute_backpack, rhs_d6_Parachute_backpack...), si no B_Parachute / Steerable_Parachute_F.\nVIOC_fnc_pjChute = {\n\tparams [\"_op\"];\n\tprivate _res = [\"B_Parachute\", \"Steerable_Parachute_F\"];\n\tprivate _ch = _op getOrDefault [\"chute\", \"\"];\n\tif (_ch isEqualType \"\" && {_ch != \"\"}) then {\n\t\tprivate _cfg = configFile >> \"CfgVehicles\" >> (_ch + \"_backpack\");\n\t\tif (isClass _cfg && {getNumber (_cfg >> \"isBackpack\") == 1} && {getNumber (_cfg >> \"scope\") >= 1}) then {\n\t\t\tprivate _pc = getText (_cfg >> \"ParachuteClass\");\n\t\t\tif (_pc != \"\" && {_pc isKindOf \"Paraglide\"}) then {_res = [configName _cfg, _pc]};\n\t\t};\n\t};\n\t_res\n};\n\n//--- Manda subir a un jugador (se corre en su maquina). Devuelve true si se le mando.\nVIOC_fnc_pjSend = {\n\tparams [\"_op\", \"_veh\", \"_p\"];\n\tprivate _why = [_p] call VIOC_fnc_pjCheck;\n\tif (_why == \"\" && {(side group _p) != (_op get \"side\")}) then {_why = \"no es una operacion de tu bando\"};\n\tif (_why == \"\" && {!alive _veh || {!canMove _veh}}) then {_why = \"el transporte ya no esta\"};\n\tif (_why == \"\" && {vehicle _p == _veh}) then {_why = \"ya vas en el transporte\"};\n\tif (_why == \"\" && {(_veh emptyPositions \"Cargo\") < 1}) then {_why = \"no queda sitio en el transporte\"};\n\tif (_why != \"\") exitWith {[format [\"No puedes saltar con ellos: %1.\", _why]] remoteExecCall [\"VIOC_PJ_fnc_msg\", _p]; false};\n\tif (count (_op getOrDefault [\"pjlo\", []]) == 0) then {_op set [\"pjlo\", getUnitLoadout _p]};\n\t[_veh, _op get \"pjlo\", _op getOrDefault [\"pjchute\", [\"B_Parachute\", \"Steerable_Parachute_F\"]], (_op get \"pkg\") get \"name\"] remoteExecCall [\"VIOC_PJ_fnc_board\", _p];\n\tformat [\"%1 sube al transporte de %2\", name _p, (_op get \"pkg\") get \"id\"] call VIOC_fnc_soLog;\n\ttrue\n};\n\n//--- Lo llama VIOC_fnc_soDoPara con el equipo ya a bordo: sube a quien lo pidio y ofrece el salto de la IA.\nVIOC_fnc_pjBoard = {\n\tparams [\"_op\", \"_veh\", \"_team\"];\n\tif (VIOC_PJ_MODE <= 0) exitWith {};\n\t_op set [\"pjlo\", [_team] call VIOC_fnc_pjTemplate];\n\t_op set [\"pjchute\", [_op] call VIOC_fnc_pjChute];\n\t{[_op, _veh, _x] call VIOC_fnc_pjSend} forEach ((_op getOrDefault [\"pj\", []]) select {!isNull _x});\n\tif ((_op getOrDefault [\"preq\", \"\"]) isEqualTo \"\" && {VIOC_PJ_MODE >= 2}) then {\n\t\tprivate _key = str (_op get \"tok\");\n\t\tVIOC_PJ_OPS set [_key, [_op, _veh, time + 60]];\n\t\tprivate _side = _op get \"side\";\n\t\tprivate _home = _op getOrDefault [\"home\", []];\n\t\tprivate _pl = allPlayers - (entities \"HeadlessClient_F\");\n\t\tif (!isMultiplayer && {hasInterface} && {!isNull player}) then {_pl pushBackUnique player};\n\t\t_pl = _pl select {alive _x && {(side group _x) == _side} && {(VIOC_PJ_MODE >= 3) || {(count _home > 0) && {(_x distance2D _home) < VIOC_PJ_NEAR}}}};\n\t\tprivate _label = format [\"%1 hacia %2\", (_op get \"pkg\") get \"name\", (_op get \"town\") getVariable [\"cti_town_name\", \"el objetivo\"]];\n\t\t{[_key, _label, 60] remoteExecCall [\"VIOC_PJ_fnc_offer\", _x]} forEach _pl;\n\t};\n};\n\n//--- \"UNIRSE AL SALTO\" (remoteExecCall desde el cliente): se valida otra vez y se manda subir (gratis).\nVIOC_fnc_pjAccept = {\n\tparams [[\"_p\", objNull, [objNull]], [\"_key\", \"\", [\"\"]]];\n\tif (!isServer || {isNull _p}) exitWith {};\n\tprivate _ro = remoteExecutedOwner;\n\tif (isMultiplayer && {_ro > 0} && {_ro != (owner _p)}) exitWith {};\n\tprivate _e = VIOC_PJ_OPS getOrDefault [_key, []];\n\tif (count _e < 3 || {time > (_e select 2)}) exitWith {[\"Ese salto ya no esta disponible (ya saltaron o paso el tiempo).\"] remoteExecCall [\"VIOC_PJ_fnc_msg\", _p]};\n\t_e params [\"_op\", \"_veh\"];\n\tprivate _home = _op getOrDefault [\"home\", []];\n\tif (VIOC_PJ_MODE < 3 && {(count _home == 0) || {(_p distance2D _home) > (VIOC_PJ_NEAR + 100)}}) exitWith {[format [\"Para unirte al salto tienes que estar a menos de %1 m de tu base.\", VIOC_PJ_NEAR]] remoteExecCall [\"VIOC_PJ_fnc_msg\", _p]};\n\t[_op, _veh, _p] call VIOC_fnc_pjSend;\n};\n\n//--- Los jugadores que van en el aparato saltan (o bajan, si esta en tierra) en su maquina.\nVIOC_fnc_pjJump = {\n\tparams [\"_veh\"];\n\tif (isNull _veh) exitWith {};\n\t{if (isPlayer _x) then {[_veh] remoteExecCall [\"VIOC_PJ_fnc_jump\", _x]}} forEach (crew _veh);\n};\n\n//--- Fin del vuelo de ida: cierra la oferta y (_force) que no quede ningun jugador dentro. Si el aparato fue alcanzado\n//--- (_force = false) no se obliga a nadie: el jugador decide si salta (su cliente le avisa).\nVIOC_fnc_pjEnd = {\n\tparams [\"_veh\", \"_op\", [\"_force\", true]];\n\tprivate _e = VIOC_PJ_OPS getOrDefault [str (_op get \"tok\"), []];\n\tif (count _e > 2) then {_e set [2, -1]};\n\tif (_force) then {[_veh] call VIOC_fnc_pjJump};\n};\n\n//--- Borra el aparato y su tripulacion IA, pero nunca con un jugador dentro (antes le hace saltar o bajar; espera 90 s).\nVIOC_fnc_pjSafeDelete = {\n\tparams [\"_veh\"];\n\tif (isNull _veh) exitWith {};\n\tif (({isPlayer _x} count (crew _veh)) > 0) then {\n\t\t[_veh] call VIOC_fnc_pjJump;\n\t\tprivate _t = time + 90;\n\t\twaitUntil {sleep 1; isNull _veh || {({isPlayer _x} count (crew _veh)) == 0} || {time > _t}};\n\t};\n\tif (isNull _veh) exitWith {};\n\tif (({isPlayer _x} count (crew _veh)) > 0) exitWith {\"para_join: queda un jugador dentro, el aparato no se borra\" call VIOC_fnc_soLog};\n\t{deleteVehicle _x} forEach (crew _veh);\n\tdeleteVehicle _veh;\n};\n\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "insert_after",
+   "anchor": "\t  - Esc / M / CANCELAR cierra sin pedir nada.",
+   "text": "\n\t  - VIOC para_join: \"Saltar con ellos (yo tambien)\" (solo paracaidistas; parametro VIOC_PARA_JOIN): subes al avion con\n\t    equipo de paracaidista y saltas con el equipo (VIOC_para_join.sqf)."
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SOR_SEL = [0, 1, false];\t//--- [tipo, soldados, unirse]: se recuerda entre pedidos",
+   "text": "VIOC_SOR_SEL = [0, 1, false, false];\t//--- [tipo, soldados, unirse, saltar con ellos (VIOC para_join)]: se recuerda entre pedidos"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SOR_fnc_setType = {params [\"_i\"]; VIOC_SOR_SEL set [0, _i]; call VIOC_SOR_fnc_refresh};",
+   "text": "VIOC_SOR_fnc_setType = {params [\"_i\"]; VIOC_SOR_SEL set [0, _i]; if (_i != 1) then {VIOC_SOR_SEL set [3, false]}; call VIOC_SOR_fnc_refresh};\t//--- VIOC para_join: saltar solo con paracaidistas\n//--- VIOC para_join: \"Saltar con ellos (yo tambien)\": al activarlo el tipo pasa a Paracaidistas\nVIOC_SOR_fnc_toggleJump = {\n\tif ((missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) <= 0) exitWith {hint \"Saltar con los paracaidistas esta desactivado en el lobby.\"};\n\tVIOC_SOR_SEL set [3, !(VIOC_SOR_SEL param [3, false])];\n\tif (VIOC_SOR_SEL select 3) then {VIOC_SOR_SEL set [0, 1]};\n\tcall VIOC_SOR_fnc_refresh;\n};"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "insert_after",
+   "anchor": "\t_jb ctrlSetBackgroundColor (if (_join) then {[0.25, 0.55, 0.2, 1]} else {[0.2, 0.2, 0.2, 0.9]});",
+   "text": "\n\tif (!isNil \"VIOC_SOR_C_PJ\" && {!isNull VIOC_SOR_C_PJ}) then {\t//--- VIOC para_join\n\t\tprivate _pjOn = (missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) > 0;\n\t\tprivate _pj = _pjOn && {VIOC_SOR_SEL param [3, false]};\n\t\tVIOC_SOR_C_PJ ctrlEnable _pjOn;\n\t\tVIOC_SOR_C_PJ ctrlSetText (if (!_pjOn) then {\"Saltar con ellos: desactivado en el lobby\"} else {if (_pj) then {\"Saltar con ellos (yo tambien): SI\"} else {\"Saltar con ellos (yo tambien): NO\"}});\n\t\tVIOC_SOR_C_PJ ctrlSetBackgroundColor (if (_pj) then {[0.25, 0.55, 0.2, 1]} else {[0.2, 0.2, 0.2, 0.9]});\n\t};"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\t[player, _type, VIOC_SOR_POS, _join, _n, _seen, _cap] remoteExecCall [\"VIOC_fnc_soPlayerRequest\", 2];",
+   "text": "\tprivate _pj = (VIOC_SOR_SEL param [3, false]) && {(missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) > 0};\t//--- VIOC para_join\n\tif (_pj && {vehicle player != player} && {(driver (vehicle player) == player) || {(vehicle player) isKindOf \"Air\"}}) exitWith {hint \"Para saltar con ellos bajate del vehiculo (o deja de conducirlo).\"};\n\t[player, _type, VIOC_SOR_POS, _join, _n, _seen, _cap, _pj] remoteExecCall [\"VIOC_fnc_soPlayerRequest\", 2];"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "insert_after",
+   "anchor": "\t_jb ctrlSetTooltip \"Al llegar se unen a tu grupo si caben (Shift+clic en el mapa tambien lo activa); si no, atacan solos\";",
+   "text": "\n\t//--- VIOC para_join: \"Saltar con ellos (yo tambien)\"\n\t_y = _y + _lh + _p * 1.2;\n\tprivate _pjb = [\"RscButton\", [_x0 + _p, _y, _iw, _lh]] call _mk;\n\t_pjb ctrlAddEventHandler [\"ButtonClick\", \"with missionNamespace do {call VIOC_SOR_fnc_toggleJump}\"];\n\t_pjb ctrlSetTooltip \"Solo paracaidistas: subes al avion con equipo de paracaidista y saltas con el equipo (tu equipo de antes queda guardado)\";\n\tVIOC_SOR_C_PJ = _pjb;\n\t_bg ctrlSetPosition [_x0, _y0, _w, _H * 0.65];\n\t_bg ctrlCommit 0;"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "insert_before",
+   "anchor": "\tclass SEPERATOR_RESPAWN {",
+   "text": "\tclass VIOC_PARA_JOIN {\n\t\ttitle = \"VIOC: Saltar tu tambien con los paracaidistas (con equipo como el suyo)\";\n\t\tvalues[] = {0,1,2,3};\n\t\ttexts[] = {\"No\",\"Solo en mis operaciones pedidas\",\"Mis pedidas y las de la IA si estoy a menos de 500 m de la base\",\"Mis pedidas y las de la IA desde cualquier lugar\"};\n\t\tdefault = 1;\n\t};\n"
+  },
+  {
+   "file": "Client/Functions/Client_AddMissionActions.sqf",
+   "action": "append",
+   "text": "\n//--- VIOC para_join: unirse a un salto de paracaidistas de la IA (oferta de 60 s) y recuperar el equipo de antes del salto (ver VIOC_para_join.sqf)\nif ((missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) > 0) then {\n\tplayer addAction [\"<t color='#ffb27f'>UNIRSE AL SALTO (paracaidistas)</t>\", {if (!isNil \"VIOC_PJ_fnc_accept\") then {call VIOC_PJ_fnc_accept}}, \"\", 89, true, true, \"\", \"alive _this && {!isNil 'VIOC_PJ_fnc_offerOk'} && {call VIOC_PJ_fnc_offerOk}\"];\n\tplayer addAction [\"<t color='#ffb27f'>Recuperar mi equipo anterior</t>\", {if (!isNil \"VIOC_PJ_fnc_restore\") then {call VIOC_PJ_fnc_restore}}, \"\", 88, false, true, \"\", \"alive _this && {!isNil 'VIOC_PJ_SAVED'} && {!isNil 'VIOC_PJ_fnc_canRestore'} && {call VIOC_PJ_fnc_canRestore}\"];\n};\n"
+  },
+  {
+   "file": "init.sqf",
+   "action": "append",
+   "text": "\n//--- VIOC: saltar con los paracaidistas (solo cliente; parametro VIOC_PARA_JOIN; el servidor esta en VIOC_specops.sqf)\nif (hasInterface) then {call compile preprocessFileLineNumbers \"VIOC_para_join.sqf\"};\n"
+  }
+ ]
+}

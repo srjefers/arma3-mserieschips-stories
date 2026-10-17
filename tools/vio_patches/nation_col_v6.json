@@ -1,0 +1,23 @@
+{
+ "description": "VIOC nation_col_v6 (2026-10-17): integraciones de Colombia con parches V6 de Tanoa que Malden no tiene: uav_request (MQ-9 de EE. UU.), air_support (A-10 y Ghostrider de EE. UU.) y towns_capital (\"Colombia\" en los avisos). Va despues de air_support y de nation_col. Sin efecto si CTI_COL_SIDE = -1.",
+ "steps": [
+  {
+   "file": "VIOC_uav_server.sqf",
+   "action": "insert_after",
+   "anchor": "\t\tif ((_n isEqualTo (missionNamespace getVariable [\"CTI_BW_ID\", 0])) || {_n isEqualTo (missionNamespace getVariable [\"CTI_NVA_ID\", 1])}) then {_nat = \"CW\"};",
+   "text": "\n\t\tif (!isNil \"CTI_COL_ID\" && {_n isEqualTo CTI_COL_ID}) then {_nat = \"US\"};\t//--- VIOC nation_col_v6: Colombia recibe el MQ-9 de EE. UU. (apoyo de EE. UU.)"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "insert_after",
+   "anchor": "\t\tif ((_n isEqualTo (missionNamespace getVariable [\"CTI_BW_ID\", 0])) || {_n isEqualTo (missionNamespace getVariable [\"CTI_NVA_ID\", 1])}) then {_nat = \"CW\"};",
+   "text": "\n\t\tif (!isNil \"CTI_COL_ID\" && {_n isEqualTo CTI_COL_ID}) then {_nat = \"US\"};\t//--- VIOC nation_col_v6: Colombia recibe el A-10 y el Ghostrider de EE. UU. (apoyo de EE. UU.)"
+  },
+  {
+   "file": "VIOC_towns_capital.sqf",
+   "action": "insert_before",
+   "anchor": "\t\tif (_n == \"\") then {_n = [\"Oeste\", \"Este\"] select (_sid == CTI_EAST_ID)};",
+   "text": "\t\tif ((missionNamespace getVariable [\"CTI_COL_SIDE\", -9]) isEqualTo _sid) then {_n = \"Colombia\"};\t//--- VIOC nation_col_v6\n"
+  }
+ ]
+}

@@ -1,0 +1,189 @@
+{
+ "name": "specops_multi",
+ "purpose_es": "Varias operaciones especiales a la vez (solo Tanoa por ahora; va al final de su cadena). Opcion de lobby nueva 'VIOC: Operaciones especiales a la vez' (1/2/3/5/8, 5 por defecto): maximo de operaciones de la IA en curso POR BANDO y maximo de operaciones pedidas en curso POR JUGADOR. La IA sigue lanzando como mucho una cada 'VIOC: Operaciones especiales, una como maximo cada' (intervalo sin cambios), pero ya no espera a que termine la anterior; un pueblo no es objetivo de dos operaciones del mismo bando a la vez (ni al reforzar, ni al avanzar). El vigilante libera cada operacion colgada por separado. Topes de soldados: IA 10 x maximo por bando (50 con 5), pedidas 8 x maximo por bando (40 con 5); se sigue respetando el tope de IA de perf_cleanup. La espera entre pedidos de un jugador pasa a 0/2/5/10/15/30 min (2 por defecto). El panel PEDIR muestra 'Pedidos activos X/N' y la espera. Avisos, pagos, devoluciones, unirse al grupo y eleccion de objetivos de la IA iguales.",
+ "source": "work/v6_build/specops_multi (2026-10-16): src/multi_block.sqf, make_patch.py, dryrun.py, lint.py; resultados en VIOC_specops.multi.sqf y VIOC_specops_request.multi.sqf",
+ "risks": "Ver work/v6_build/specops_multi/REPORT.txt. Sin probar en el juego.",
+ "test_in_game_es": "Ver work/v6_build/specops_multi/REPORT.txt.",
+ "steps": [
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t- Limites: una operacion activa por bando y como mucho 16 soldados especiales vivos por bando.",
+   "text": "\t- Limites (VIOC specops_multi): hasta VIOC_SPECOPS_MAX_ACTIVE operaciones a la vez por bando (lobby, 5 por defecto), con\n\t  VIOC_SPECOPS_INTERVAL minutos como minimo entre dos lanzamientos, y como mucho 10 x ese maximo de soldados\n\t  especiales vivos por bando. Un pueblo no es objetivo de dos operaciones del mismo bando a la vez."
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SO_MAXUNITS = 16;\t\t//--- no se lanza otra si el bando ya tiene mas soldados especiales vivos\nVIOC_SO_ACTIVE = [false, false];\t//--- [oeste, este]\nVIOC_SO_TOKEN = [-1, -1];\t\t\t//--- identifica la operacion activa de cada bando (para el vigilante)\nVIOC_SO_START = [0, 0];\t\t\t\t//--- cuando empezo (si el script de la operacion muriera, el gestor libera el bando)",
+   "text": "//--- VIOC specops_multi: varias operaciones a la vez (lobby VIOC_SPECOPS_MAX_ACTIVE: por bando para la IA y por jugador\n//--- para los pedidos); los topes de soldados crecen con ese maximo.\nVIOC_SO_MAXACTIVE = missionNamespace getVariable [\"VIOC_SPECOPS_MAX_ACTIVE\", 5];\nif !(VIOC_SO_MAXACTIVE isEqualType 0) then {VIOC_SO_MAXACTIVE = 5};\nVIOC_SO_MAXACTIVE = ((round VIOC_SO_MAXACTIVE) max 1) min 20;\nVIOC_SO_MAXUNITS = 10 * VIOC_SO_MAXACTIVE;\t//--- no se lanza otra si el bando ya tiene mas soldados especiales vivos (10 por operacion)\nVIOC_SO_ACTIVE = [false, false];\t//--- [oeste, este]: true si el bando ya tiene el maximo de operaciones a la vez\nVIOC_SO_OPS = [[], []];\t\t\t\t//--- operaciones de la IA en curso por bando: [token, inicio, pueblo objetivo]\nVIOC_SO_TOKEN = [-1, -1];\t\t\t//--- (sin uso desde specops_multi: los tokens estan en VIOC_SO_OPS)\nVIOC_SO_START = [0, 0];\t\t\t\t//--- (sin uso desde specops_multi)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_fnc_soPickTarget = {\n\tparams [\"_side\", \"_anchors\"];",
+   "text": "VIOC_fnc_soPickTarget = {\n\tparams [\"_side\", \"_anchors\", [\"_skip\", []]];\t//--- VIOC specops_multi: _skip = pueblos ya ocupados por otra operacion"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\tif ((_t getVariable [\"cti_town_sideID\", -1]) != _sid) then {",
+   "text": "\t\tif (((_t getVariable [\"cti_town_sideID\", -1]) != _sid) && {!(_t in _skip)}) then {"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\tprivate _bd = _max;",
+   "text": "\n\tprivate _busy = [_side] call VIOC_fnc_soBusyTowns;\t//--- VIOC specops_multi"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if ((_x != _skip) && {(_x getVariable [\"cti_town_sideID\", -1]) != _sid}) then {",
+   "text": "if ((_x != _skip) && {(_x getVariable [\"cti_town_sideID\", -1]) != _sid} && {!(_x in _busy)}) then {"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif ((VIOC_SO_TOKEN select _i) isEqualTo _tok) then {\n\t\tVIOC_SO_ACTIVE set [_i, false];\n\t\tVIOC_SO_TOKEN set [_i, -1];\n\t};",
+   "text": "\t//--- VIOC specops_multi: quita esa operacion de la lista del bando (puede haber varias a la vez)\n\tVIOC_SO_OPS set [_i, (VIOC_SO_OPS select _i) select {!((_x select 0) isEqualTo _tok)}];\n\tcall VIOC_fnc_soSync;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\t\t\t\t\t_town = _next;",
+   "text": "\n\t\t\t\t\t[_op get \"tok\", _town] call VIOC_fnc_soOpSetTown;\t//--- VIOC specops_multi"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\tprivate _hit = [_side] call VIOC_fnc_soTownsHit;",
+   "text": "\n\t_hit = _hit - ([_side] call VIOC_fnc_soBusyTowns);\t//--- VIOC specops_multi: no reforzar dos veces el mismo pueblo"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "private _t = [_side, _anchors] call VIOC_fnc_soPickTarget;",
+   "text": "private _t = [_side, _anchors, [_side] call VIOC_fnc_soBusyTowns] call VIOC_fnc_soPickTarget;\t//--- VIOC specops_multi: no atacar dos veces el mismo pueblo"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tVIOC_SO_ACTIVE set [_i, true];\n\tVIOC_SO_TOKEN set [_i, _tok];\n\tVIOC_SO_START set [_i, time];",
+   "text": "\t(VIOC_SO_OPS select _i) pushBack [_tok, time, _town];\t//--- VIOC specops_multi: una operacion mas del bando\n\tcall VIOC_fnc_soSync;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "1 pedido activo por jugador, enfriamiento por jugador",
+   "text": "hasta VIOC_SO_MAXACTIVE pedidos activos por jugador (specops_multi), enfriamiento por jugador"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "//---     VIOC_SO_PREQ        pedidos activos [uid, token, inicio, ayudante]",
+   "text": "//---     VIOC_SO_PREQ        pedidos activos [uid, token, inicio, ayudante, pueblo, bando]"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SO_PREQ_COOLDOWN = missionNamespace getVariable [\"VIOC_SPECOPS_PLAYER_COOLDOWN\", 10];\nif !(VIOC_SO_PREQ_COOLDOWN isEqualType 0) then {VIOC_SO_PREQ_COOLDOWN = 10};",
+   "text": "VIOC_SO_PREQ_COOLDOWN = missionNamespace getVariable [\"VIOC_SPECOPS_PLAYER_COOLDOWN\", 2];\t//--- VIOC specops_multi: 2 min por defecto\nif !(VIOC_SO_PREQ_COOLDOWN isEqualType 0) then {VIOC_SO_PREQ_COOLDOWN = 2};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SO_PREQ_SIDECAP = 16;\t",
+   "text": "VIOC_SO_PREQ_SIDECAP = 8 * VIOC_SO_MAXACTIVE;\t//--- VIOC specops_multi: 8 por pedido simultaneo;\t"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tVIOC_SO_PREQ = VIOC_SO_PREQ select {!((_x select 1) isEqualTo _tok)};",
+   "text": "\tVIOC_SO_PREQ = VIOC_SO_PREQ select {!((_x select 1) isEqualTo _tok)};\n\tcall VIOC_fnc_soPreqPublish;\t//--- VIOC specops_multi"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif ([_uid] call VIOC_fnc_soPreqActive) exitWith {\"ya tienes una operacion pedida en curso (una por jugador)\"};",
+   "text": "\tif (([_uid] call VIOC_fnc_soPreqCount) >= VIOC_SO_MAXACTIVE) exitWith {format [\"ya tienes %1 operaciones pedidas en curso (maximo %1 a la vez)\", VIOC_SO_MAXACTIVE]};\t//--- VIOC specops_multi"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tVIOC_SO_PREQ pushBack [_uid, _tok, time, _helper];",
+   "text": "\tVIOC_SO_PREQ pushBack [_uid, _tok, time, _helper, _town, _side];\t//--- VIOC specops_multi: + pueblo y bando\n\tcall VIOC_fnc_soPreqPublish;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SO_PREQ_CFG = [call VIOC_fnc_soUnitPrice, VIOC_SO_PREQ_MULT, VIOC_SO_PREQ_COOLDOWN, VIOC_SO_PREQ_TOWNR, VIOC_SO_PREQ_BASER];",
+   "text": "VIOC_SO_PREQ_CFG = [call VIOC_fnc_soUnitPrice, VIOC_SO_PREQ_MULT, VIOC_SO_PREQ_COOLDOWN, VIOC_SO_PREQ_TOWNR, VIOC_SO_PREQ_BASER, VIOC_SO_MAXACTIVE];\t//--- VIOC specops_multi: + maximo a la vez"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "format [\"activo (modo %1, cada %2 min, %3 paquetes, mision %4).\", VIOC_SO_MODE, VIOC_SO_INTERVAL, count VIOC_SO_PACKAGES, [\"CW\", \"clasica\"] select VIOC_SO_VANILLA] call VIOC_fnc_soLog;",
+   "text": "//=====================================================================================================================\n//--- VIOC specops_multi: varias operaciones especiales a la vez.\n//---   IA: hasta VIOC_SO_MAXACTIVE operaciones en curso por bando (VIOC_SO_OPS: [token, inicio, pueblo] por bando);\n//---       entre dos lanzamientos sigue habiendo como minimo VIOC_SPECOPS_INTERVAL minutos (igual que antes).\n//---       VIOC_SO_ACTIVE [oeste, este] = true solo cuando el bando ya tiene el maximo (el gestor no lanza mas).\n//---       Un pueblo no es objetivo de dos operaciones del mismo bando a la vez (VIOC_fnc_soBusyTowns).\n//---   Jugadores: hasta VIOC_SO_MAXACTIVE pedidos activos por jugador (VIOC_SO_PREQ: [uid, token, inicio, ayudante,\n//---       pueblo, bando]); el recuento de cada jugador se publica en VIOC_SO_PREQ_N ([uid, n], ...) para su panel.\n//---   Topes de soldados: IA 10 x maximo por bando (VIOC_SO_MAXUNITS), pedidos 8 x maximo por bando\n//---   (VIOC_SO_PREQ_SIDECAP); el presupuesto de IA (VIOC_PERF_AI_MAX) se sigue respetando.\n//--- Consola (servidor): VIOC_SO_OPS   operaciones de la IA en curso;   VIOC_SO_PREQ   pedidos de jugadores en curso\n//=====================================================================================================================\n\n//--- VIOC_SO_ACTIVE de cada bando = ya tiene el maximo de operaciones a la vez.\nVIOC_fnc_soSync = {\n\t{VIOC_SO_ACTIVE set [_forEachIndex, (count _x) >= VIOC_SO_MAXACTIVE]} forEach VIOC_SO_OPS;\n};\n\n//--- Pueblos que ya son objetivo de una operacion en curso del bando (de la IA o pedida por un jugador).\nVIOC_fnc_soBusyTowns = {\n\tparams [\"_side\"];\n\tprivate _i = [_side] call VIOC_fnc_soSideID;\n\tprivate _res = [];\n\tif (_i >= 0) then {{_res pushBackUnique (_x param [2, objNull])} forEach (VIOC_SO_OPS select _i)};\n\t{if ((_x param [5, sideUnknown]) isEqualTo _side) then {_res pushBackUnique (_x param [4, objNull])}} forEach VIOC_SO_PREQ;\n\t_res - [objNull]\n};\n\n//--- La operacion avanzo a otro pueblo: se anota como su nuevo objetivo.\nVIOC_fnc_soOpSetTown = {\n\tparams [\"_tok\", \"_town\"];\n\tif (_tok isEqualType \"\") exitWith {{if ((_x select 1) isEqualTo _tok) then {_x set [4, _town]}} forEach VIOC_SO_PREQ};\n\t{\n\t\t{if ((_x select 0) isEqualTo _tok) then {_x set [2, _town]}} forEach _x;\n\t} forEach VIOC_SO_OPS;\n};\n\n//--- Pedidos en curso de un jugador (los colgados se liberan solos a la hora y media de empezar, como el vigilante).\nVIOC_fnc_soPreqCount = {\n\tparams [\"_uid\"];\n\t{[_x select 1] call VIOC_fnc_soPreqFree} forEach (VIOC_SO_PREQ select {((_x select 0) == _uid) && {(time - (_x select 2)) > (VIOC_SO_LIFETIME + 3000)}});\n\t{(_x select 0) == _uid} count VIOC_SO_PREQ\n};\n\n//--- Publica a los clientes cuantos pedidos en curso tiene cada jugador (para \"pedidos activos X/N\" del panel).\nVIOC_fnc_soPreqPublish = {\n\tprivate _uids = [];\n\t{_uids pushBackUnique (_x select 0)} forEach VIOC_SO_PREQ;\n\tVIOC_SO_PREQ_N = _uids apply {private _u = _x; [_u, {(_x select 0) == _u} count VIOC_SO_PREQ]};\n\tpublicVariable \"VIOC_SO_PREQ_N\";\n};\nVIOC_SO_PREQ_N = [];\npublicVariable \"VIOC_SO_PREQ_N\";\nformat [\"varias a la vez: hasta %1 operaciones por bando (IA) y por jugador; topes de soldados IA %2 y pedidos %3 por bando\", VIOC_SO_MAXACTIVE, VIOC_SO_MAXUNITS, VIOC_SO_PREQ_SIDECAP] call VIOC_fnc_soLog;\n\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t//--- vigilante: si el script de una operacion muriera sin liberar a su bando, se libera a la hora y media\n\t{\n\t\tif ((VIOC_SO_ACTIVE select _x) && {(time - (VIOC_SO_START select _x)) > (VIOC_SO_LIFETIME + 3000)}) then {\n\t\t\tVIOC_SO_ACTIVE set [_x, false];\n\t\t\tVIOC_SO_TOKEN set [_x, -1];\n\t\t\tVIOC_SO_LAST set [_x, \"liberado por el vigilante (la operacion no termino)\"];\n\t\t\t\"vigilante: operacion colgada, bando liberado\" call VIOC_fnc_soLog;\n\t\t};\n\t} forEach [0, 1];",
+   "text": "\t//--- vigilante (VIOC specops_multi: por operacion): si el script de una operacion muriera sin liberarla, se quita a la hora y media\n\t{\n\t\tprivate _i = _x;\n\t\tprivate _ops = VIOC_SO_OPS select _i;\n\t\tprivate _keep = _ops select {(time - (_x select 1)) <= (VIOC_SO_LIFETIME + 3000)};\n\t\tif (count _keep < count _ops) then {\n\t\t\tVIOC_SO_OPS set [_i, _keep];\n\t\t\tVIOC_SO_LAST set [_i, format [\"liberadas por el vigilante: %1 (no terminaron)\", (count _ops) - (count _keep)]];\n\t\t\t\"vigilante: operacion colgada, liberada\" call VIOC_fnc_soLog;\n\t\t};\n\t} forEach [0, 1];\n\tcall VIOC_fnc_soSync;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (VIOC_SO_ACTIVE select _i) then {VIOC_SO_LAST set [_i, \"forzada: ignorada, ya hay una operacion en curso\"]};",
+   "text": "if (VIOC_SO_ACTIVE select _i) then {VIOC_SO_LAST set [_i, format [\"forzada: ignorada, ya hay %1 operaciones en curso (el maximo)\", count (VIOC_SO_OPS select _i)]]};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t[VIOC_SO_ACTIVE select 0, VIOC_SO_LAST select 0,",
+   "text": "\t\t[count (VIOC_SO_OPS select 0), VIOC_SO_LAST select 0,"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t[VIOC_SO_ACTIVE select 1, VIOC_SO_LAST select 1,",
+   "text": "\t\t[count (VIOC_SO_OPS select 1), VIOC_SO_LAST select 1,"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t    VIOC_SPECOPS_STATUS            estado: [modo, intervalo, [oeste], [este]]",
+   "text": "\t    VIOC_SPECOPS_STATUS            estado: [modo, intervalo, [oeste], [este]]; cada bando: [operaciones en curso, ultimo, s hasta la proxima]\n\t    VIOC_SO_OPS                    operaciones de la IA en curso por bando: [token, inicio, pueblo]"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "insert_before",
+   "anchor": "//--- Rehace los textos del panel (seleccion, objetivo, costo, fondos, grupo, enfriamiento).",
+   "text": "//--- VIOC specops_multi: pedidos tuyos en curso (lo publica el servidor en VIOC_SO_PREQ_N) y maximo a la vez.\nVIOC_SOR_fnc_active = {\n\tprivate _uid = getPlayerUID player;\n\tif (_uid == \"\") then {_uid = \"local\"};\n\tprivate _l = missionNamespace getVariable [\"VIOC_SO_PREQ_N\", []];\n\tprivate _i = if (_l isEqualType []) then {_l findIf {_x isEqualType [] && {(_x param [0, \"\"]) == _uid}}} else {-1};\n\tprivate _max = (missionNamespace getVariable [\"VIOC_SO_PREQ_CFG\", []]) param [5, 1];\n\tif !(_max isEqualType 0) then {_max = 1};\n\t[if (_i < 0) then {0} else {(_l select _i) param [1, 0]}, _max]\n};\n\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\tif (_cd > 0) then {_l pushBack format [\"<t color='#F5D363'>Enfriamiento: faltan %1 s</t>\", round _cd]};",
+   "text": "\t(call VIOC_SOR_fnc_active) params [\"_act\", \"_maxAct\"];\t//--- VIOC specops_multi\n\t_l pushBack format [\"<t color='#9fd3ff'>Pedidos activos:</t> <t color='%3'>%1/%2</t>\", _act, _maxAct, if (_act >= _maxAct) then {\"#F56363\"} else {\"#76F563\"}];\n\t_l pushBack (if (_cd > 0) then {format [\"<t color='#9fd3ff'>Espera entre pedidos:</t> <t color='#F5D363'>faltan %1 s</t>\", round _cd]} else {\"<t color='#9fd3ff'>Espera entre pedidos:</t> <t color='#76F563'>lista</t>\"});"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "insert_after",
+   "anchor": "\tif (VIOC_SOR_CD_UNTIL > time) exitWith {hint format [\"Todavia no puedes pedir otra operacion: faltan %1 s.\", round (VIOC_SOR_CD_UNTIL - time)]};",
+   "text": "\n\t(call VIOC_SOR_fnc_active) params [\"_act\", \"_maxAct\"];\t//--- VIOC specops_multi\n\tif (_act >= _maxAct) exitWith {hint format [\"Ya tienes %1 operaciones pedidas en curso (maximo %2 a la vez). Espera a que termine alguna.\", _act, _maxAct]};"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "replace",
+   "anchor": "\tclass VIOC_SPECOPS_PLAYER_COOLDOWN {\n\t\ttitle = \"VIOC: Operaciones especiales pedidas, una como maximo cada (por jugador)\";\n\t\tvalues[] = {5,10,15,20,30};\n\t\ttexts[] = {\"5 min\",\"10 min\",\"15 min\",\"20 min\",\"30 min\"};\n\t\tdefault = 10;\n\t};",
+   "text": "\tclass VIOC_SPECOPS_PLAYER_COOLDOWN {\n\t\ttitle = \"VIOC: Operaciones especiales pedidas: espera minima entre un pedido y el siguiente (por jugador)\";\n\t\tvalues[] = {0,2,5,10,15,30};\n\t\ttexts[] = {\"Sin espera\",\"2 min\",\"5 min\",\"10 min\",\"15 min\",\"30 min\"};\n\t\tdefault = 2;\n\t};"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "insert_before",
+   "anchor": "\tclass SEPERATOR_RESPAWN {",
+   "text": "\tclass VIOC_SPECOPS_MAX_ACTIVE {\n\t\ttitle = \"VIOC: Operaciones especiales a la vez: maximo por bando (IA) y maximo de pedidas en curso por jugador\";\n\t\tvalues[] = {1,2,3,5,8};\n\t\ttexts[] = {\"1\",\"2\",\"3\",\"5\",\"8\"};\n\t\tdefault = 5;\n\t};\n"
+  }
+ ]
+}

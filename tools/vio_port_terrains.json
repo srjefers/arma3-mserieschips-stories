@@ -1,0 +1,70 @@
+{
+  "comment": "Datos curados por terreno para tools/vio_port.py (port de VIO-BECTI-CW a mapas sin versión CW). Coordenadas del mundo [x, y] en metros. 'label' = etiqueta del mapa (CfgWorlds >> Names) o sitio derivado; el depósito se busca a menos de 300 m de la etiqueta. 'tier': L = (30,120,1200), M = (30,90,900), S = (30,60,600) como startSV/maxSV/value. Los inicios de base son objetivos: el generador los ajusta a menos de 120 m al sitio plano y abierto más cercano. 'anchors_*' y 'keep_always' nunca se quitan en las plantillas de pueblos (Towns_Removed*).",
+  "terrains": {
+    "everon": {
+      "key": "EVERON",
+      "world": "Eden",
+      "map_es": "Everon",
+      "title": "Everon (CUP Terrains - CWA)",
+      "mods": [
+        {"workshop": "853743366", "title": "CUP Terrains - CWA", "required": true},
+        {"workshop": "583496184", "title": "CUP Terrains - Core", "required": true}
+      ],
+      "wrp_pbo": "853743366/addons/cup_terrains_maps_eden.pbo",
+      "config_pbo": "853743366/addons/cup_terrains_maps_eden_c.pbo",
+      "world_size": 12800,
+      "min_dry_h": 1.5,
+      "seed": 1985,
+      "catalog_params": {
+        "CTI_CAMO_ACTIVATION": "0"
+      },
+      "camo_note_es": "Templado, como Chernarus o Malden: camuflaje 0 (Standard). En 'auto' (-1) también queda en 0, pero las unidades de los pueblos usan además el camuflaje urbano (CTI_TOWN_CAMO = 4).",
+      "notes_es": "Isla de Everon (OFP 1985, versión CUP CWA). 18 lugares con nombre en CfgWorlds >> Eden >> Names (2 capitales, 5 ciudades, 11 pueblos) más 5 sitios con edificios propios: el aeródromo del norte, la base militar al sur de Levie, el puerto militar al norte de Chotain, el aserradero y una granja del oeste. Las islas (castillo de Helfenburk, la isla del noreste con cuartel, las islas del suroeste) no tienen camino por tierra: quedan fuera como pueblos y se usan como zonas de espera y prisión.",
+      "towns": [
+        {"name": "Saint Pierre", "label": [9662, 1605], "tier": "L", "source": "NameCityCapital eden_vil_SaintPierre"},
+        {"name": "Montignac", "label": [4935, 6994], "tier": "L", "source": "NameCityCapital eden_vil_Montignac"},
+        {"name": "Airport", "label": [4890, 11420], "tier": "L", "source": "derivado: pista (ilsPosition 4772,10923 y calle de rodaje x=4840) y edificios del aeródromo", "notes_es": "Con military_sites cuenta como aeropuerto (x2) por nombre y por cercanía al ILS."},
+        {"name": "Military Base", "label": [7535, 4169], "tier": "L", "source": "derivado: recinto militar al sur de Levie (cwa_repair_center x2, cwa_budova1 x3, cwa_hlaska, cwa_fuelstation)"},
+        {"name": "Lamentin", "label": [1333, 5962], "tier": "L", "source": "NameCity eden_vil_Lamentin (26 edificios)"},
+        {"name": "Meaux", "label": [4524, 9549], "tier": "M", "source": "NameCity eden_vil_Meaux"},
+        {"name": "Morton", "label": [5159, 3943], "tier": "M", "source": "NameCity eden_vil_Morton"},
+        {"name": "Durras", "label": [8835, 2710], "tier": "M", "source": "NameCity eden_vil_Durras"},
+        {"name": "Saint Phillippe", "label": [4674, 10730], "tier": "M", "source": "NameCity eden_vil_SaintPhillippe", "notes_es": "A 216 m del ILS: con military_sites también cuenta x2."},
+        {"name": "Chotain Harbor", "label": [7280, 6787], "tier": "M", "source": "derivado: puerto militar al norte de Chotain (4 torres vez, cwa_budova1 x3, muelles molo)"},
+        {"name": "Chotain", "label": [7057, 5987], "tier": "S", "source": "NameVillage eden_vil_Chotain"},
+        {"name": "Entre Deux", "label": [5735, 7059], "tier": "S", "source": "NameVillage eden_vil_EntreDeux"},
+        {"name": "Figari", "label": [5283, 5375], "tier": "S", "source": "NameVillage eden_vil_Figari"},
+        {"name": "Laruns", "label": [7556, 5558], "tier": "S", "source": "NameVillage eden_vil_Laruns"},
+        {"name": "Le Moule", "label": [2590, 5384], "tier": "S", "source": "NameVillage eden_vil_LeMoule"},
+        {"name": "Levie", "label": [7554, 4737], "tier": "S", "source": "NameVillage eden_vil_Levie"},
+        {"name": "Provins", "label": [5501, 6050], "tier": "S", "source": "NameVillage eden_vil_Provins"},
+        {"name": "Regina", "label": [7197, 2347], "tier": "S", "source": "NameVillage eden_vil_Regina"},
+        {"name": "Tyrone", "label": [4946, 9056], "tier": "S", "source": "NameVillage eden_vil_Tyrone"},
+        {"name": "Gravette", "label": [4116.64, 7753.69], "tier": "S", "source": "NameVillage eden_vil_Gravette"},
+        {"name": "Vernon", "label": [9142, 2159], "tier": "S", "source": "NameVillage eden_vil_Vernon"},
+        {"name": "Sawmill", "label": [3424, 4457], "tier": "S", "source": "derivado: aserradero (ind_timbers x3, bouda2 x4, granja)"},
+        {"name": "Le Moule Farm", "label": [2847, 6411], "tier": "S", "source": "derivado: granja con campanario a 1 km al noreste de Le Moule"}
+      ],
+      "anchors_west": ["Saint Phillippe", "Airport", "Meaux"],
+      "anchors_east": ["Durras", "Saint Pierre", "Military Base"],
+      "keep_always": ["Montignac"],
+      "base_starts_west": [[4650, 10050], [5625, 10400], [5450, 8425], [4725, 7700]],
+      "base_starts_east": [[8400, 3575], [8525, 3300], [6365, 4870], [6975, 5445]],
+      "base_starts_note_es": "Oeste: 2 inicios lejanos en el norte (entre Meaux y Saint Phillippe) y 2 intermedios (al sur de Tyrone y entre Gravette y Montignac). Este: 2 en el único valle llano del sureste (entre la base militar y Durras) y 2 intermedios (al oeste de Levie y cerca de Chotain). Con 'Start-up Placement' 6 km solo valen los pares norte-sureste (7.1-7.6 km); los intermedios quedan a menos de 6 km de todos los del otro bando y solo los usa el parche start_near_front en los escenarios 'frente'.",
+      "holding": {
+        "west": [10888, 11700],
+        "east": [2862, 2000],
+        "prison": [11150, 11450]
+      },
+      "holding_note_es": "Zonas de espera en islas sin acceso por tierra (como la 'respawn island' del código de la misión): Oeste en la isla del noreste, Este en la isla del suroeste y la prisión también en la isla del noreste.",
+      "known_limits_es": [
+        "El sureste es montañoso: el Este tiene un solo valle llano para su base lejana, entre la base militar y Durras (los dos inicios lejanos del Este están ahí).",
+        "Las islas no tienen pueblos (no hay camino por tierra); se usan para las zonas de espera y la prisión.",
+        "Saint Phillippe y el aeródromo están a menos de 750 m del ILS: con el parche military_sites los dos cuentan como aeropuerto (x2).",
+        "Laruns es un caserío de 5 casas en ladera: su depósito queda a 175 m de la etiqueta, junto al camino.",
+        "9 pueblos están a 600-700 m del vecino más cercano (Levie y la base militar, a 606 m). Esos llevan un rango de 394-546 m (7.º argumento de Init_Location.sqf) para que sus zonas no se pisen; las misiones CW del autor nunca lo usan, así que es lo primero a mirar si algo raro pasa al capturar.",
+        "La pista del aeródromo es la de CWA, con ILS en (4772, 10923); que la IA de aviones despegue y aterrice bien no se probó."
+      ]
+    }
+  }
+}

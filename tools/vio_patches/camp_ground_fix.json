@@ -1,0 +1,22 @@
+{
+  "name": "camp_ground_fix",
+  "purpose_es": "En las misiones de Malden (CW y clásica), el segundo campamento de Cancon está a 2861 m de altura en el mission.sqm (id 1488, atlOffset=2861.031): probablemente un error del editor, porque esa altura es igual a su coordenada Y. Si reapareces ahí, caes desde esa altura. Además, la captura busca soldados a 10 m del campamento (5 m para jugadores, en distancia 3D), así que probablemente nadie pueda capturarlo. El parche baja al suelo, al iniciar, todo campamento que esté a más de 5 m de altura (solo ese, en los 14 orígenes revisados) y siempre deja al jugador en el suelo al reaparecer.",
+  "source": "work/vio_front/draft_camp_ground_fix.json (2026-10-12), re-verificado en work/vio_frontspawn (2026-10-13)",
+  "reviewed": "revisado 2026-10-13 (work/vio_frontspawn): el borrador de work/vio_front se re-verificó contra las 14 fuentes actuales. El campamento de Cancon (id 1488, atlOffset 2861.031) sigue flotando en Malden CW y en la clásica. Ningún otro campamento ni punto de aparición de pueblo de ninguna fuente está a más de 3 m del suelo, así que la regla de > 5 m solo toca ese campamento. Las 2 anclas aparecen 1 vez en cada fuente y siguen únicas después de military_sites, military_sites_statics y base_structures_style, que insertan en Init_Location.sqf en otras anclas. El paso corre en el servidor antes de crear el modelo del campamento, la bandera y town_camp.fsm. Simulación 37/37 con una copia del catálogo, cada paso aplicado 1 vez. sqflint: 0 errores. Sin prueba en el juego.",
+  "risks": "setPosATL on the camp logic runs on the server and has a global effect. On a hosted game the host is the server anyway. The respawn menu now always puts the player at ground level (z = 0, AGLS) 8-30 m from the chosen point. That is the same as before for anything on the ground, structures, FOBs, camps and mobile respawn vehicles included, and on bridges AGLS keeps the bridge surface. Harmless on maps without floating camps. Not tested in game.",
+  "test_in_game_es": "Malden, con el bando que tenga Cancon. En el lobby pon 'RESPAWN: Camps' en 'Nearby Camps'. Muere, elige en el menú de reaparición un campamento de Cancon y comprueba que apareces en el suelo. Con Zeus, comprueba que la bandera y el búnker del segundo campamento de Cancon están en el suelo, cerca de (5198, 2861), y no en el cielo. Comprueba también que se puede capturar a pie.",
+  "steps": [
+    {
+      "file": "Common/Init/Init_Location.sqf",
+      "action": "insert_before",
+      "anchor": "_town setVariable [\"cti_town_camps\", _camps, true];",
+      "text": "{ if (((getPosATL _x) select 2) > 5) then { _x setPosATL [(getPosATL _x) select 0, (getPosATL _x) select 1, 0] } } forEach _camps; //--- VIOC camp_ground_fix: campamentos flotantes al suelo (Cancon, Malden)\n\t"
+    },
+    {
+      "file": "Client/Functions/UI/Functions_UI_RespawnMenu.sqf",
+      "action": "replace",
+      "anchor": "_spawn_at = [_where, 8, 30] call CTI_CO_FNC_GetRandomPosition;",
+      "text": "_spawn_at = [_where, 8, 30] call CTI_CO_FNC_GetRandomPosition; _spawn_at set [2, 0]; //--- VIOC camp_ground_fix: siempre en el suelo"
+    }
+  ]
+}

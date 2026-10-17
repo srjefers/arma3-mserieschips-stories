@@ -1,0 +1,1 @@
+-mod=vn;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@psc;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob

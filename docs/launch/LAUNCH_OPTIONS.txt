@@ -1,0 +1,81 @@
+# Opciones de lanzamiento de Arma 3 (Steam > Arma 3 > Propiedades > General > Opciones de lanzamiento)
+# Pega UNA línea según lo que vayas a jugar. Para jugar sin mods, borra el texto. Actualizado 2026-10-16 (fuera las líneas 1, 1N, 1G, 0a-0c, 3 y 4).
+# Las rutas usan nombres cortos (carpeta ~/m, leyenda al final): el Mac no carga bien los mods si la línea es muy
+# larga (con 912 caracteres fallaba: sin mapas de CUP y soldados sin equipo; con 592 funcionaba). Mantener cada
+# línea por debajo de ~600 caracteres. Las líneas 6 y 10 ("-par=") leen la lista de mods de un archivo en ~/m (copia en
+# la carpeta par/ del proyecto): así la línea de Steam es corta y no hay límite (-par probado en el Mac el 2026-10-13).
+# Los Creator DLC se cargan con el nombre de su carpeta: GM, vn, CSLA, WS, SPE, RF, EF.
+# Toda línea con JSRS lleva también WS: JSRS declara el mapa Sefrou-Ramal y sin WS el juego avisa
+# "No entry ...CfgWorlds/sefrouramal.description".
+
+# 1V) SELVA 2026 (569 caracteres): CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire. SOLO para "CW: Selva 2026" en Cam Lao Nam:
+#     con S.O.G. y CUP cargados, cualquier misión CW arranca con los pueblos repartidos 50:50 (error del autor).
+-mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@fal
+
+# 2) UKRAINE WAR (386 caracteres): Un jugador > Escenarios > "Ukraine war". RHS + el mapa Krayina y sus objetos,
+#    audio y sangre, más granadas SER, TrueColor y Blastcore. Sin CUP (no lo necesita) y sin PiR (la misión tiene su propio
+#    sistema de reaparición).
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@cob
+
+# 2b) UKRAINE WAR CON DRONES EXTRA (486 caracteres): igual que la 2, más los mods de drones.
+#     La misión ya trae sus propios drones (tu cuadricóptero con granada y carga explosiva; drones suicidas,
+#     bombarderos y el Pchela de reconocimiento rusos). Con esta línea además tienes el FPV y el Mavic en el
+#     arsenal, y la IA (de los dos bandos) puede llevar mochilas FPV. Combinación sin probar: más drones y más difícil.
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@cob
+
+# 5) ANTISTASI (438 caracteres): MULTIPLAYER > Host Server (LAN) > mapa > Antistasi Ultimate. Tú diriges la guerrilla.
+#    CUP y sus mapas, Isla Pera, Antistasi Ultimate, audio y sangre, más granadas SER, TrueColor, HLS y Blastcore. Sin RHS
+#    (Antistasi pide CUP o RHS, no los dos) y sin PiR (Antistasi no lo admite). Con los Creator DLC, usa la 9.
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+
+# 6) CW CON TODO (archivo -par): las misiones CW, también las de Weferlingen (Global Mobilization), con los vehículos de
+#    Western Sahara, Reaction Forces y Expeditionary Forces. CUP, RHS, JSRS, drones, inventario 3D, Wardrobe, PiR y sangre, mapa Fallujah, Blackthorn, UK y QAV (@nue), IA LAMBS, segunda arma KJW (tecla 4), inhibidor Sania,
+#    granadas SER (con su parche PiR), TrueColor (Ctrl+Alt+C), iluminación HLS, Blastcore y los mapas CWA (Everon, Nogova,
+#    Kolgujev, Malden 1985). Lista en ~/m/p_cw.txt.
+-par=C:/Users/<usuario>/m/p_cw.txt
+
+# 7) CREATOR DLC (435 caracteres): campañas y escenarios oficiales de los 7 Creator DLC y misiones del Workshop en sus mapas
+#    (DRO, Impasse, HWS, Desert Ocean...). Con CUP y RHS para las misiones que los usan, audio, sangre y efectos; sin PiR.
+-mod=GM;vn;CSLA;WS;SPE;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+
+# 8) VIETNAM (361 caracteres): S.O.G. Prairie Fire, "CW: Vietnam 1968" en Cam Lao Nam (los dos bandos),
+#    Insurgency Vietnam y DRO Cam Lao Nam.
+#    Sin CUP ni RHS (con S.O.G. cargado la misión CW fuerza pueblos 50:50 si hay CUP o RHS).
+-mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@psc;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+
+# 9) ANTISTASI CON CREATOR DLC (455 caracteres): Antistasi Ultimate también en Weferlingen, Cam Lao Nam, Khe Sanh, Gabreta
+#    y Sefrou-Ramal. Las facciones se eligen a mano al empezar (lista en work/vio_cdlc/solo_modes.md).
+-mod=GM;vn;CSLA;WS;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+
+# 10) TROPICAL, TANOA V6 (archivo -par, con tope de memoria): misiones CW de Tanoa. Como la 6 pero sin GM, sin los
+#    mapas de CUP, CWA ni Fallujah (no hacen falta en Tanoa y ocupan memoria). -maxMem=16383 le pide al motor no pasar de
+#    16 GB (sin esto se da hasta el 80 % de la RAM, unos 28.6 GB en este Mac); -maxVRAM=8191 limita las texturas, aunque
+#    puede que el motor lo ignore. Por probar (2026-10-16): mide con tools/arma_memlog.sh. Lista en ~/m/p_tropical.txt.
+#    Desde el 2026-10-16 también trae Enhanced Movement Rework (saltar y trepar), WBK Immersive Animations, DUI Squad Radar
+#    (radar de tu escuadra) y Advanced Towing (remolcar vehículos). ACSTG y el ejército colombiano todavía no.
+-par=C:/Users/<usuario>/m/p_tropical.txt -maxMem=16383 -maxVRAM=8191
+
+# 11) EDITOR TROPICAL (archivo -par): para el Editor (Eden) con mapas tropicales (Tanoa, Isla Pera, Cam Lao Nam) y todas
+#    las facciones: CUP, RHS, S.O.G., el ejército colombiano, 3den Enhanced (herramientas del Editor), LAMBS, ACSTG
+#    (la IA no ve a través de la hierba), movimiento, animaciones, radar de escuadra, remolque, audio y efectos.
+#    No es para las misiones CW: con S.O.G. cargado, los pueblos salen 50:50. Lista en ~/m/p_eden_tropical.txt.
+-par=C:/Users/<usuario>/m/p_eden_tropical.txt -maxMem=16383
+
+# 12) MISION B, COLOMBIA CONTRA EL NARCO (archivo -par, con tope de memoria): "CW: Colombia y EE.UU. contra la
+#    narcoinsurgencia (Tanoa)". La línea 10 más el ejército colombiano (@col). Solo para esta misión: @col cambia piezas
+#    internas del juego (los obuses dejan de contar como armas fijas), así que no se usa en las demás. Lista en
+#    ~/m/p_tropical_col.txt.
+-par=C:/Users/<usuario>/m/p_tropical_col.txt -maxMem=16383 -maxVRAM=8191
+
+# LEYENDA de nombres cortos (~/m/@corto apunta a la misma carpeta que ~/ArmaMods/@largo):
+#   @cba=CBA_A3  @cupc=CUP_Terrains_Core  @cupm=CUP_Terrains_Maps  @cupw=CUP_Weapons  @cupu=CUP_Units  @cupv=CUP_Vehicles
+#   @rhsr=RHSAFRF  @rhsu=RHSUSAF  @rhsg=RHSGREF  @rhst=RHSTERRACORE  @jsrs=JSRS_SOUNDMOD_2025  @fpv=ArmaFPV
+#   @mav=Mavic3_Improved  @dro=Drongos_Drone_Tweaks  @cld=CL_AI_Drone_Warfare  @inv=Inventory_Preview  @war=Wardrobe  @pir=PiR
+#   @wbk=WBK_Simple_Blood  @ser=SER_Impacts  @dhr=Death_Hit_Reactions  @pdc=PiR_DHR_Compat  @fal=Fallujah_2  @hag=HAG_Objects
+#   @kra=Krayina  @sua=Squad_Ukraine  @arm=Simple_Armbands  @got=Global_Ops_Terrains  @ant=Antistasi_Ultimate
+#   @nue=Nuevos_TRF_QAV  @lmb=LAMBS_Danger  @kjw=KJW_TwoPrimaryWeapons  @san=Sania_Volnorez_EW  @sgr=SER_Grenades
+#   @psc=PiR_SER_Compat  @tco=TrueColor  @hls=HLS_Lighting  @cob=Blastcore_CoB  @cwa=CUP_Terrains_CWA
+#   @em=Enhanced_Movement  @emr=Enhanced_Movement_Rework  @wia=WBK_Immersive_Animations  @dui=DUI_Squad_Radar
+#   @tow=Advanced_Towing  @3de=3den_Enhanced  @acs=ACSTG  @col=Colombian_Armed_Forces_RHS
+#   GM=Global Mobilization  vn=S.O.G. Prairie Fire  CSLA=CSLA Iron Curtain  WS=Western Sahara  SPE=Spearhead 1944
+#   RF=Reaction Forces  EF=Expeditionary Forces

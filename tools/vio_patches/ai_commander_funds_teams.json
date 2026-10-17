@@ -1,0 +1,22 @@
+{
+  "name": "ai_commander_funds_teams",
+  "purpose_es": "El comandante de IA reparte dinero a sus propios equipos cuando tiene más de 100 000, en vez de 500 000, que casi nunca alcanzaba. Así sus equipos blindados y aéreos pueden pagar tanques y helicópteros de ataque. El envío al equipo aéreo baja de 125 000 a 75 000 para que el comandante no se quede sin fondos. También corrige un error latente del código original al hacer esa transferencia.",
+  "source": "wf_157783a9-41f (análisis + revisión adversarial, 2026-10-12)",
+  "reviewed": "corregido por el revisor",
+  "risks": "The quotes inside the FSM string must stay doubled (\"\"_id\"\"), because this is FSM/config string syntax. The change applies to every AI commander. If the AI also commands your side, your AI teams get the same help; if you are the commander, nothing changes for you, and player-led groups are now excluded. Per transfer, with the existing x1.25 modifier: infantry 12.5k, light 31k, armored 62.5k, air 75k, each with 50% chance every 6 min. After a transfer the commander may run short and research one upgrade a few minutes later. A stale _id from the previous team can give a role-mismatched amount; that is harmless. For a more aggressive AI use 60000, for a more conservative one 150000.",
+  "test_in_game_es": "Prueba rápida: pon en el lobby 'INCOME: Starting Funds (East Commander)' en 200000. Unos 6–12 minutos después de que el enemigo levante sus fábricas, sus equipos deberían comprar vehículos más caros (BMP-2/BMP-3 y Mi-24 cuando tenga esas mejoras). Si el nivel de log lo permite, en el .rpt aparece 'Send funds to team, side: EAST'. Después vuelve el parámetro a su valor normal.",
+  "steps": [
+    {
+      "file": "Server/FSM/update_commander.fsm",
+      "action": "replace",
+      "anchor": "CTI_AI_COMMANDER_TRANSFER_FUNDS_CHANCE && _funds > 500000) then {",
+      "text": "CTI_AI_COMMANDER_TRANSFER_FUNDS_CHANCE && _funds > 100000 && {!isPlayer leader _x}) then { private _id = 0 max ([\"\"Infantry\"\", \"\"Light\"\", \"\"Heavy\"\", \"\"Air\"\"] find (_x getVariable [\"\"cti_role_evo\"\", \"\"Infantry\"\"]));"
+    },
+    {
+      "file": "Common/Init/Init_CommonConstants.sqf",
+      "action": "replace",
+      "anchor": "CTI_AI_COMMANDER_FUNDS_AIR = 100000;",
+      "text": "CTI_AI_COMMANDER_FUNDS_AIR = 60000; // VIOC: envio al equipo aereo (original 100000)"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "ai_skip_naval_research",
+  "purpose_es": "La IA deja de investigar mejoras navales, que nunca usa porque nunca construye astillero. Ahorra dinero y libera el único hueco de investigación, así que los tanques y aviones enemigos llegan antes. Tú, como comandante humano, puedes seguir investigando mejoras navales.",
+  "source": "wf_157783a9-41f (análisis + revisión adversarial, 2026-10-12)",
+  "reviewed": "ok del revisor",
+  "risks": "This only changes the build order the AI commander generates (CTI_<side>_Commander_Path). The upgrade menu and the human commander are unaffected. If the AI commands your side, it will no longer research naval for you either, and it never built a Naval Yard for you anyway.",
+  "test_in_game_es": "Indirecta: en una partida nueva el enemigo debería tener la mejora 2–3 de la fábrica pesada y la 1–2 de la aérea antes que sin el parche. Si eres comandante, tu menú de mejoras sigue ofreciendo las mejoras navales.",
+  "steps": [
+    {
+      "file": "Common/Config/Upgrades/Upgrades.sqf",
+      "action": "replace",
+      "anchor": "CTI_UPGRADE_AIR_AT,CTI_UPGRADE_NAVAL];",
+      "text": "CTI_UPGRADE_AIR_AT];"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+ "description": "VIOC nation_col_west (2026-10-17): solo para el escenario tanoa_colombia (Colombia + EE. UU. contra la narcoinsurgencia): Colombia en el Oeste por defecto (CTI_COL_SIDE = 0). vio_config.py no puede poner el valor porque el parametro lo agrega nation_col; reemplaza la linea de nation_col (va despues).",
+ "steps": [
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "replace",
+   "anchor": "\t\tdefault = -1; //--- VIOC nation_col: desactivada; el escenario tanoa_colombia la pone en 0 (parche nation_col_west)",
+   "text": "\t\tdefault = 0; //--- VIOC nation_col_west: Colombia en el Oeste (escenario tanoa_colombia)"
+  }
+ ]
+}

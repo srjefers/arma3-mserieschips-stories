@@ -1,0 +1,17 @@
+{
+ "description": "VIOC ai_air_teams (2026-10-17): cuantas escuadras IA de cada bando son aereas (helicopteros y aviones). Original: ceil(5 % de los equipos) = 1 con 6 equipos. Parametro de lobby VIOC_AI_AIR_TEAMS (0 = original). Se aplica en el reparto unico de roles del comandante IA (Server/FSM/update_commander.fsm, estado Set_Roles__One_Time). Siempre deja al menos 2 equipos de tierra.",
+ "steps": [
+  {
+   "file": "Server/FSM/update_commander.fsm",
+   "action": "replace",
+   "anchor": "_ratio_air = ceil(_teams_count * .05);",
+   "text": "_ratio_air = if ((missionNamespace getVariable [\"\"VIOC_AI_AIR_TEAMS\"\", 2]) <= 0) then {ceil(_teams_count * .05)} else {((missionNamespace getVariable [\"\"VIOC_AI_AIR_TEAMS\"\", 2]) min ((_teams_count - 2) max 0)) max 0}; //--- VIOC ai_air_teams: escuadras aereas por bando (parametro de lobby; original ceil(5 %))"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "insert_before",
+   "anchor": "\tclass SEPERATOR_RESPAWN {",
+   "text": "\tclass VIOC_AI_AIR_TEAMS {\n\t\ttitle = \"VIOC: Escuadras aereas de la IA por bando (helicopteros y aviones, amigas y enemigas; siempre quedan al menos 2 de tierra)\";\n\t\tvalues[] = {0,1,2,3};\n\t\ttexts[] = {\"Original (5 %: 1 con 6 escuadras)\",\"1\",\"2\",\"3\"};\n\t\tdefault = 2;\n\t};\n"
+  }
+ ]
+}

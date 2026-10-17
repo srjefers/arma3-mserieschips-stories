@@ -1,0 +1,16 @@
+{
+  "name": "sog_east_gear_fix",
+  "purpose_es": "Arregla un error del autor: en Client/Init/Init_Client.sqf:154-155 la tienda de equipo del jugador del Este con S.O.G. (Gear_NVA_SOG, armas y ropa del Ejército de Vietnam del Norte) solo se arma si CTI_SOV_SIDE >= 0 (la nación rusa), no si CTI_NVA_SIDE >= 0. Init_CommonConstants.sqf:821-824 pone CTI_SOV_SIDE = -1 cuando no están cargados ni CUP ni CWR3 ni RHS, así que con una línea solo de S.O.G. el jugador que elige el Este se queda sin el equipo de S.O.G. en la tienda. Con el arreglo la tienda se arma si el Este tiene Vietnam del Norte o Rusia (el caso original sigue igual).",
+  "source": "workflow CDLC 2026-10-13 (work/vio_cdlc/cw_ports.md, sección 'Error de la misión con S.O.G.')",
+  "reviewed": "Ancla verificada 1 vez en las 8 fuentes CW 2.0.6 del lote 2025-09-10 (Malden, Chernarus verano e invierno, Livonia, Takistan, Tanoa, Altis, Stratis; CRLF). Armado sin errores con work/vio_cdlc/check_cdlc_ports.py simulate. No probado en el juego. Copiado a tools/vio_patches el 2026-10-13 y agregado a cln_1968_frente.",
+  "risks": "Solo cambia la condición del bloque del cliente; el resto de la carga de equipo es igual. Si alguien activa a la vez Rusia en el Este y S.O.G., ya pasaba antes que la tienda rusa recibía las armas de S.O.G.",
+  "test_in_game_es": "Línea solo con S.O.G. (sin CUP), misión de Cam Lao Nam, elegir el Este: la tienda debe mostrar SKS, Type 56, RPD, PPSh-41, RPG-7.",
+  "steps": [
+    {
+      "file": "Client/Init/Init_Client.sqf",
+      "action": "replace",
+      "anchor": "\tif(CTI_SOV_SIDE >= 0) then {\n\t\tif (CTI_P_SideJoined == east) then {(east) call compile preprocessFileLineNumbers \"Common\\Config\\Gear\\Gear_NVA_SOG.sqf\"};",
+      "text": "\tif(CTI_NVA_SIDE >= 0 || CTI_SOV_SIDE >= 0) then {\t//--- VIOC sog_east_gear_fix: la tienda de PAVN (S.O.G.) dependía solo de CTI_SOV_SIDE\n\t\tif (CTI_P_SideJoined == east) then {(east) call compile preprocessFileLineNumbers \"Common\\Config\\Gear\\Gear_NVA_SOG.sqf\"};"
+    }
+  ]
+}

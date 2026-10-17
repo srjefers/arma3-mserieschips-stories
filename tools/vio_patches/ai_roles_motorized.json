@@ -1,0 +1,22 @@
+{
+  "name": "ai_roles_motorized",
+  "purpose_es": "Opcional. Con 6 equipos, el enemigo pasa de 3 equipos de infantería a 2, y gana 1 equipo motorizado que hoy no tiene. Desde temprano verás UAZ armados enemigos (SPG-9, AGS-30, PKM), luego BRDM y BTR.",
+  "source": "wf_157783a9-41f (análisis + revisión adversarial, 2026-10-12)",
+  "reviewed": "ok del revisor; 2026-10-13: excluye los grupos con jugador del reparto de roles (revision de diseno de ai_allied_skill)",
+  "risks": "The enemy has one fewer infantry team, so it may capture towns slightly slower; motorized teams are vehicles with their crews. The mix for other team counts: 4 teams give 1/1/1/1, 7 give 1 air, 2 heavy, 3 infantry, 1 motorized, 8 give 1/2/3/2. If the AI commands your side, the same applies there. Roles are assigned only once, when the AI commander starts.",
+  "test_in_game_es": "Empieza una partida nueva. En los primeros 5–10 minutos tras la construcción del cuartel y la fábrica ligera enemigos, deberías encontrar UAZ armados rusos patrullando o atacando pueblos.",
+  "steps": [
+    {
+      "file": "Server/FSM/update_commander.fsm",
+      "action": "replace",
+      "anchor": "_ratio_infantry = ceil(_teams_count * .45);",
+      "text": "_ratio_infantry = floor(_teams_count * .45);"
+    },
+    {
+      "file": "Server/FSM/update_commander.fsm",
+      "action": "replace",
+      "anchor": "_teams = (_side call CTI_CO_FNC_GetSideGroups) - [_sideCommander];",
+      "text": "_teams = ((_side call CTI_CO_FNC_GetSideGroups) - [_sideCommander]) select {!isPlayer leader _x};"
+    }
+  ]
+}

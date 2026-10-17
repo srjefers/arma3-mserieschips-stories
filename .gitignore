@@ -1,0 +1,27 @@
+# --- Registros y estado de la máquina local (rutas propias): no se publican. Con / = solo en la raíz (docs/ sí se publica) ---
+/INSTALL_LOG.md
+/PENDIENTES.md
+/LAUNCH_OPTIONS.txt
+/ESCENARIOS.md
+/install_manifest.tsv
+/par/
+/PROPUESTA_SETUP_MODERNO.md
+/VERIFICACION_*.md
+/research/
+/CLAUDE.local.md
+
+# --- Contenido de terceros, copias de seguridad y salidas de compilación ---
+/work/
+/backups/
+/downloads/
+*.pbo
+*.bin
+*.Arma3Profile
+
+# --- Mapas base generados desde los archivos del terreno (cada quien los genera: tools/war_replay.py basemap) ---
+tools/war_replay_maps/*.png
+
+# --- Python / macOS ---
+__pycache__/
+*.pyc
+.DS_Store

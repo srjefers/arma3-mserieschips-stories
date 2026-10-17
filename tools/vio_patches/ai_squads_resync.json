@@ -1,0 +1,21 @@
+{
+  "name": "ai_squads_resync",
+  "purpose_es": "Arregla el error de la persistencia. Al cargar una partida guardada, vuelve a armar las listas de compra de los equipos de IA (infantería, motorizados, blindados y aéreos) según las mejoras ya investigadas. Antes de esto, el ruso volvía a comprar solo MT-LB y Mi-8 de transporte después de cada carga.",
+  "source": "wf_157783a9-41f (análisis + revisión adversarial, 2026-10-12)",
+  "reviewed": "ok del revisor",
+  "risks": "Init_Server.sqf uses CRLF line endings, so insert CRLF as shown. With CTI_FACTORY_LEVEL_PRESET > 0, Init_Server.sqf:350-357 has already appended the preset tiers, so some entries get duplicated; that only changes pick weights, not which units can be bought. The script relies on the variable names CTI_SQUAD_<SIDE>_<troop>T<n> and ...All exactly as Server_UpgradeSquads.sqf:42,49 uses them. With no save present, all levels are 0 and nothing changes. AntiAir pools are left alone, matching the original behaviour. Anchors were verified only on the Malden source; the build tool should check the anchor occurs exactly once in each map's copy.",
+  "test_in_game_es": "Juega hasta que el enemigo tenga al menos 2 mejoras de la fábrica pesada. Para acelerar la prueba, puedes poner temporalmente en el lobby 'UPGRADE: Pre researched Factory level' en 2. Espera un guardado automático (cada 10 min), sal de la misión y vuelve a cargarla. Los equipos blindados rusos deben seguir llegando con BMP-2/BMP-3 y no solo con MT-LB. En el .rpt deben aparecer las líneas 'VIOC ai_squads_resync: CTI_SQUAD_EAST_Armored nivel N -> X entradas' y ningún error de ese archivo.",
+  "steps": [
+    {
+      "file": "VIOC_ai_squads_resync.sqf",
+      "action": "new_file",
+      "text": "// VIOC_ai_squads_resync.sqf - agregado por tools/vio_build.py (copia configurada, no es del autor de la mision).\n// Con persistencia, al cargar la partida el servidor restaura las mejoras (cti_upgrades) pero no vuelve a\n// llamar CTI_SE_FNC_UpgradeSquads, asi que las escuadras \"Auto\" que compran los equipos IA\n// (CTI_SQUAD_<LADO>_Infantry/Motorized/Armored/Air) se quedan solo con el nivel 0.\n// Esto las reconstruye igual que si las mejoras se hubieran investigado en esta sesion.\nif (!isServer) exitWith {};\n{\n\tprivate _side = _x;\n\tprivate _upgrades = (_side) call CTI_CO_FNC_GetSideUpgrades;\n\tprivate _levels = missionNamespace getVariable [format [\"CTI_%1_UPGRADES_LEVELS\", _side], []];\n\tif (!isNil \"_upgrades\" && {_upgrades isEqualType []} && {count _levels > 0}) then {\n\t\t{\n\t\t\t_x params [\"_upg\", \"_troop\"];\n\t\t\tprivate _key = format [\"CTI_SQUAD_%1_%2\", _side, _troop];\n\t\t\tprivate _squad = missionNamespace getVariable [_key, []];\n\t\t\tprivate _cur = if (count _upgrades > _upg) then {_upgrades select _upg} else {0};\n\t\t\tif (count _squad > 2 && {_cur > 0} && {count _levels > _upg}) then {\n\t\t\t\tif (_cur >= (_levels select _upg)) then {\n\t\t\t\t\tprivate _all = missionNamespace getVariable [format [\"%1All\", _key], []];\n\t\t\t\t\tif (count _all > 2) then {_squad set [2, +(_all select 2)]};\n\t\t\t\t} else {\n\t\t\t\t\tprivate _pool = +(_squad select 2);\n\t\t\t\t\tfor \"_l\" from 1 to _cur do {\n\t\t\t\t\t\tprivate _tier = missionNamespace getVariable [format [\"%1T%2\", _key, _l], []];\n\t\t\t\t\t\tif (count _tier > 2) then {_pool append (_tier select 2)};\n\t\t\t\t\t};\n\t\t\t\t\t_squad set [2, _pool];\n\t\t\t\t};\n\t\t\t\tmissionNamespace setVariable [_key, _squad];\n\t\t\t\tdiag_log format [\"VIOC ai_squads_resync: %1 nivel %2 -> %3 entradas\", _key, _cur, count (_squad select 2)];\n\t\t\t};\n\t\t} forEach [[CTI_UPGRADE_BARRACKS, \"Infantry\"], [CTI_UPGRADE_LIGHT, \"Motorized\"], [CTI_UPGRADE_HEAVY, \"Armored\"], [CTI_UPGRADE_AIR, \"Air\"]];\n\t};\n} forEach [west, east];\n"
+    },
+    {
+      "file": "Server/Init/Init_Server.sqf",
+      "action": "insert_after",
+      "anchor": "[\"upgrades\"] call CTI_SE_FNC_LOAD;",
+      "text": "\r\n\t\t[] execVM \"VIOC_ai_squads_resync.sqf\"; //--- VIOC: rehace las escuadras de la IA segun las mejoras cargadas"
+    }
+  ]
+}

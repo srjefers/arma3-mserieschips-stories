@@ -1,0 +1,16 @@
+{
+  "name": "ai_skip_gear_research_no_humans",
+  "purpose_es": "Opcional. Un bando sin jugadores humanos no investiga mejoras de equipo personal ('Gear'), que solo sirven para la tienda de los jugadores. El enemigo deja de gastar tiempo y dinero en eso y llega antes a los vehículos. Si la IA dirige tu bando, sí las sigue investigando porque tú estás ahí.",
+  "source": "wf_157783a9-41f (análisis + revisión adversarial, 2026-10-12)",
+  "reviewed": "ok del revisor",
+  "risks": "Upgrades.sqf uses CRLF line endings. In a switch(true) the first matching case wins, so the new GEAR case has to sit before the combined BARRACKS/GEAR case, as written. The condition is evaluated later in the FSM, where _side is defined, the same way the existing conditions work. If a human later joins an empty side, the gear upgrades resume. This assumes AI units do not depend on Gear upgrades: their loadouts come from their classes, and CTI_AI_<side>_DEFAULT_GEAR is static (Init_Server.sqf:254).",
+  "test_in_game_es": "Indirecta: el enemigo llega antes a la fábrica pesada y a sus mejoras. Si la IA dirige tu bando, comprueba que en tu tienda siguen apareciendo armas de niveles nuevos con el tiempo.",
+  "steps": [
+    {
+      "file": "Common/Config/Upgrades/Upgrades.sqf",
+      "action": "insert_before",
+      "anchor": "case (_activeFactory in [CTI_UPGRADE_BARRACKS,CTI_UPGRADE_GEAR] && _cur_structures > 1):",
+      "text": "case (_activeFactory == CTI_UPGRADE_GEAR && _cur_structures > 1):\t{_factoryBuild = true;_condition = {([_side, CTI_BARRACKS] call CTI_CO_FNC_HasStructure) && {(allPlayers findIf {side group _x == _side}) > -1}}};\r\n\t\t\t\t"
+    }
+  ]
+}

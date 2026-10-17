@@ -1,0 +1,21 @@
+{
+  "name": "vehicles_start",
+  "purpose_es": "Vehículos para moverse desde el inicio (pedidos del usuario, 2026-10-13): 1) todo lo de la fábrica ligera (autos, camiones, blindados con ruedas) se puede comprar apenas esté construida, sin investigar 'Wheeled'; 2) en la fábrica aérea, los helicópteros de los niveles 0 a 2 sin pilones de armas (livianos y de transporte: MH-6, UH-1Y, Mi-8, Bo 105...) quedan en nivel 0; los de ataque (con pilones: Mi-24, AH-1, UH-1Y artillado) siguen su progresión. Los tanques, los helicópteros de ataque pesados y los aviones siguen con su progresión normal. 3) El doble de vehículos iniciales junto al HQ en una partida nueva.",
+  "source": "proyecto (2026-10-13)",
+  "reviewed": "Anclas verificadas 1 vez en las 14 fuentes del catálogo (Set_Units.sqf e Init_Server.sqf). El precio y el tiempo de fabricación de cada vehículo no cambian (siguen calculados con su nivel original).",
+  "risks": "Vale para los dos bandos: la IA enemiga también puede comprar blindados con ruedas (BTR, LAV) apenas tenga su fábrica ligera. Los vehículos iniciales solo aparecen en partidas nuevas (sin partida guardada que cargar). Los helicópteros livianos también quedan disponibles para la IA enemiga apenas tenga fábrica aérea.",
+  "steps": [
+    {
+      "file": "Common/Config/Units/Set_Units.sqf",
+      "action": "replace",
+      "anchor": "_stored = [_label, _picture, _o select _i, _t select _i, _u select _i, _f select _i, _turrets, _scripts, _d select _i];",
+      "text": "private _vioc_lvl = _u select _i; //--- VIOC vehicles_start: fabrica ligera y helicopteros livianos (nivel 0-2) desde el inicio\n\t\t\tif ((_f select _i) isEqualTo CTI_FACTORY_LIGHT) then {_vioc_lvl = 0};\n\t\t\tif ((_f select _i) isEqualTo CTI_FACTORY_AIR && {_classname isKindOf \"Helicopter\"} && {_vioc_lvl isEqualType 0} && {_vioc_lvl <= 2} && {!isClass (configFile >> \"CfgVehicles\" >> _classname >> \"Components\" >> \"TransportPylonsComponent\")}) then {_vioc_lvl = 0}; //--- los de ataque (con pilones) siguen su progresion\n\t\t\t_stored = [_label, _picture, _o select _i, _t select _i, _vioc_lvl, _f select _i, _turrets, _scripts, _d select _i];"
+    },
+    {
+      "file": "Server/Init/Init_Server.sqf",
+      "action": "replace",
+      "anchor": "} forEach (missionNamespace getVariable format[\"CTI_%1_Vehicles_Startup\", _side]);",
+      "text": "} forEach ((missionNamespace getVariable [format[\"CTI_%1_Vehicles_Startup\", _side], []]) + (missionNamespace getVariable [format[\"CTI_%1_Vehicles_Startup\", _side], []])); //--- VIOC vehicles_start: el doble de vehiculos iniciales"
+    }
+  ]
+}
