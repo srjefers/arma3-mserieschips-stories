@@ -1,0 +1,89 @@
+{
+ "name": "map_lingor",
+ "description": "Datos de Lingor (worldName lingor3) para los parches V6, sin tocar sus fuentes: lista curada y capital de towns_capital (Maruko), datos de la mision B (VIOC_MB_DATA: duenios iniciales, bases fijas, ofensiva y pueblos clave), Lingor como mapa de selva (VIOC_TG_WORLDS de tropical_gear y nation_narco), version verde de estructuras, fortificaciones y vehiculos extra, y civiles y coches civiles tropicales. Cada linea solo actua si worldName es lingor3.",
+ "purpose_es": "Llevar la mision B (Colombia y EE. UU. contra la narcoinsurgencia) a Lingor con todos los sistemas V6 de Tanoa. Va justo antes de war_replay en el escenario lingor_colombia. Sin parametro de lobby propio: solo da datos; cada sistema sigue con su parametro (VIOC_TOWNS_CURATED, VIOC_MB_START, VIOC_TROPICAL_GEAR, VIOC_NARCO_STYLE, ...).",
+ "source": "work/v6_build/lingor_port (make_patch.py, lingor_terrain.json; port en work/vio_port/VIOBECTICW_LINGOR.lingor3)",
+ "reviewed": "2026-10-18: dryrun.py (lingor_colombia + tanoa_colombia de control). Sin probar en el juego.",
+ "risks": "Anclas en archivos de otros parches (towns_capital, mission_b_rules, tropical_gear, nation_narco, base_structures_style, fortifications, units_extra_qav, units_extra_dlc, civ_people, civ_vehicles): si una version nueva de esos parches cambia la linea de ancla, el build falla con 'el ancla aparece 0 veces' (no hay fallo silencioso); regenerar con make_patch.py.",
+ "test_in_game_es": "Ver work/v6_build/lingor_port/REPORT.txt, seccion 'Como probarlo en el juego'.",
+ "steps": [
+  {
+   "file": "VIOC_towns_curated.sqf",
+   "action": "insert_before",
+   "anchor": "VIOC_TC_KEEP = nil;",
+   "text": "//--- VIOC map_lingor: lista curada de Lingor (lingor3). A = B = los 28 pueblos del port (work/v6_build/lingor_port): todos estan en la\n//--- VIOC map_lingor: isla principal (el rio se cruza por puentes y vados); la isla Mariana y Bantanam no tienen pueblos. Solo en Lingor.\nif ((toLower worldName) isEqualTo \"lingor3\") then {\n\tVIOC_TC_LISTS pushBack [\"lingor3\",\n\t\t[\n\t\t\t\"Maruko\", \"Maruko Airport\", \"Puntella\", \"San Isabel\", \"Manteria\", \"Corazon\", \"Tucos\", \"San Arulco\",\n\t\t\t\"Victorin\", \"Prospero\", \"Fernando\", \"Aculto\", \"Gatoro\", \"Mirasol\", \"Zanjeer\", \"New Benio\", \"Vidora\",\n\t\t\t\"Morada\", \"Los Peligron\", \"Pancho\", \"Faunaverde\", \"Bilbado\", \"Calamar\", \"Aeropuerto Sargento\", \"Matacan\",\n\t\t\t\"Drassen\", \"El Villon\", \"Paredes\"],\n\t\t[\n\t\t\t\"Maruko\", \"Maruko Airport\", \"Puntella\", \"San Isabel\", \"Manteria\", \"Corazon\", \"Tucos\", \"San Arulco\",\n\t\t\t\"Victorin\", \"Prospero\", \"Fernando\", \"Aculto\", \"Gatoro\", \"Mirasol\", \"Zanjeer\", \"New Benio\", \"Vidora\",\n\t\t\t\"Morada\", \"Los Peligron\", \"Pancho\", \"Faunaverde\", \"Bilbado\", \"Calamar\", \"Aeropuerto Sargento\", \"Matacan\",\n\t\t\t\"Drassen\", \"El Villon\", \"Paredes\"]\n\t];\n};\n"
+  },
+  {
+   "file": "VIOC_towns_curated.sqf",
+   "action": "insert_after",
+   "anchor": "VIOC_TC_CAPITALS = [[\"tanoa\", \"Georgetown\"]]; // [mundo en minusculas, capital]",
+   "text": "\n//--- VIOC map_lingor: la capital de Lingor es Maruko (la ciudad del palacio y del aeropuerto internacional)\nif ((toLower worldName) isEqualTo \"lingor3\") then {VIOC_TC_CAPITALS pushBack [\"lingor3\", \"Maruko\"]};"
+  },
+  {
+   "file": "VIOC_mission_b.sqf",
+   "action": "insert_before",
+   "anchor": "VIOC_MB_START_ON = false;",
+   "text": "//--- VIOC map_lingor: datos de la mision B en Lingor (lingor3). Gobierno: Maruko (capital), su aeropuerto, el barrio de Puntella, San Isabel,\n//--- VIOC map_lingor: Manteria y Corazon; insurgencia: 3 aldeas de la selva del sur (Los Peligron, Pancho, Faunaverde). Bases fijas: Oeste en el\n//--- VIOC map_lingor: claro al este de la pista de Maruko (cti-spawn-west0), Este en el claro de Montehofo (cti-spawn-east0, 4,8 km de Maruko).\n//--- VIOC map_lingor: Ofensiva inicial solo contra Maruko (5 grupos nuevos + 3 escuadras IA); pueblos clave: Maruko, el aeropuerto y Puntella.\nif ((toLower worldName) isEqualTo \"lingor3\") then {\n\tVIOC_MB_DATA pushBack [\"lingor3\", \"Maruko\",\n\t\t[\"Maruko\", \"Maruko Airport\", \"Puntella\", \"San Isabel\", \"Manteria\", \"Corazon\"],\n\t\t[\"Los Peligron\", \"Pancho\", \"Faunaverde\"],\n\t\t\"cti-spawn-west0\", \"cti-spawn-east0\",\n\t\t[[\"Maruko\", 5, 3]],\n\t\t[\"Maruko\", \"Maruko Airport\", \"Puntella\"]\n\t];\n};\n"
+  },
+  {
+   "file": "Common/Init/Init_CommonConstants.sqf",
+   "action": "insert_after",
+   "anchor": "if (isNil \"VIOC_TG_WORLDS\") then {VIOC_TG_WORLDS = [\"tanoa\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\"]};",
+   "text": "\n\t\t\tif ((toLower worldName) isEqualTo \"lingor3\") then {VIOC_TG_WORLDS pushBackUnique \"lingor3\"}; //--- VIOC map_lingor: Lingor es selva (tropical_gear y nation_narco)"
+  },
+  {
+   "file": "Common/Functions/VIOC_TropicalGear.sqf",
+   "action": "insert_after",
+   "anchor": "if (isNil \"VIOC_TG_WORLDS\") then {VIOC_TG_WORLDS = [\"tanoa\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\"]};",
+   "text": "\nif ((toLower worldName) isEqualTo \"lingor3\") then {VIOC_TG_WORLDS pushBackUnique \"lingor3\"}; //--- VIOC map_lingor: Lingor es selva (tropical_gear y nation_narco)"
+  },
+  {
+   "file": "Common/Functions/VIOC_Narco.sqf",
+   "action": "insert_after",
+   "anchor": "if (isNil \"VIOC_TG_WORLDS\") then {VIOC_TG_WORLDS = [\"tanoa\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\"]};",
+   "text": "\nif ((toLower worldName) isEqualTo \"lingor3\") then {VIOC_TG_WORLDS pushBackUnique \"lingor3\"}; //--- VIOC map_lingor: Lingor es selva (tropical_gear y nation_narco)"
+  },
+  {
+   "file": "Common/Config/Base/Base.sqf",
+   "action": "insert_after",
+   "anchor": "private _vioc_green = (toLower worldName) in [\"chernarus\", \"chernarus_summer\", \"chernarus_winter\", \"cup_chernarus_a3\", \"enoch\", \"tanoa\", \"sara\", \"saralite\", \"sara_dbe1\", \"woodland_acr\", \"bootcamp_acr\", \"provinggrounds_pmc\", \"porto\", \"intro\", \"eden\", \"cain\", \"abel\", \"noe\", \"gm_weferlingen_summer\", \"gm_weferlingen_winter\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\", \"stozec\"];",
+   "text": "\n\tif ((toLower worldName) isEqualTo \"lingor3\") then {_vioc_green = true}; //--- VIOC map_lingor: Lingor es selva (version verde)"
+  },
+  {
+   "file": "Common/Config/Core_Models/Vanilla.sqf",
+   "action": "insert_after",
+   "anchor": "private _vioc_green = (toLower worldName) in [\"chernarus\", \"chernarus_summer\", \"chernarus_winter\", \"cup_chernarus_a3\", \"enoch\", \"tanoa\", \"sara\", \"saralite\", \"sara_dbe1\", \"woodland_acr\", \"bootcamp_acr\", \"provinggrounds_pmc\", \"porto\", \"intro\", \"eden\", \"cain\", \"abel\", \"noe\", \"gm_weferlingen_summer\", \"gm_weferlingen_winter\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\", \"stozec\"];",
+   "text": "\n\tif ((toLower worldName) isEqualTo \"lingor3\") then {_vioc_green = true}; //--- VIOC map_lingor: Lingor es selva (version verde)"
+  },
+  {
+   "file": "VIOC_fortifications.sqf",
+   "action": "insert_after",
+   "anchor": "VIOC_FORT_GREEN = (toLower worldName) in [\"chernarus\", \"chernarus_summer\", \"chernarus_winter\", \"cup_chernarus_a3\", \"enoch\", \"tanoa\", \"sara\", \"saralite\", \"sara_dbe1\", \"woodland_acr\", \"bootcamp_acr\", \"provinggrounds_pmc\", \"porto\", \"intro\", \"eden\", \"cain\", \"abel\", \"noe\", \"gm_weferlingen_summer\", \"gm_weferlingen_winter\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\", \"stozec\"];",
+   "text": "\nif ((toLower worldName) isEqualTo \"lingor3\") then {VIOC_FORT_GREEN = true}; //--- VIOC map_lingor: Lingor es selva (version verde)"
+  },
+  {
+   "file": "Common/Config/Units/VIOC_units_extra.sqf",
+   "action": "insert_after",
+   "anchor": "private _vioc_green = (toLower worldName) in [\"chernarus\", \"chernarus_summer\", \"chernarus_winter\", \"cup_chernarus_a3\", \"enoch\", \"tanoa\", \"sara\", \"saralite\", \"sara_dbe1\", \"woodland_acr\", \"bootcamp_acr\", \"provinggrounds_pmc\", \"porto\", \"intro\", \"eden\", \"cain\", \"abel\", \"noe\", \"gm_weferlingen_summer\", \"gm_weferlingen_winter\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\", \"stozec\"];",
+   "text": "\nif ((toLower worldName) isEqualTo \"lingor3\") then {_vioc_green = true}; //--- VIOC map_lingor: Lingor es selva (version verde)"
+  },
+  {
+   "file": "Common/Config/Units/VIOC_units_dlc.sqf",
+   "action": "insert_after",
+   "anchor": "private _vd_green = (toLower worldName) in [\"chernarus\", \"chernarus_summer\", \"chernarus_winter\", \"cup_chernarus_a3\", \"enoch\", \"tanoa\", \"sara\", \"saralite\", \"sara_dbe1\", \"woodland_acr\", \"bootcamp_acr\", \"provinggrounds_pmc\", \"porto\", \"intro\", \"eden\", \"cain\", \"abel\", \"noe\", \"gm_weferlingen_summer\", \"gm_weferlingen_winter\", \"cam_lao_nam\", \"vn_khe_sanh\", \"vn_the_bra\"];",
+   "text": "\nif ((toLower worldName) isEqualTo \"lingor3\") then {_vd_green = true}; //--- VIOC map_lingor: Lingor es selva (version verde)"
+  },
+  {
+   "file": "VIOC_civilians.sqf",
+   "action": "insert_before",
+   "anchor": "if (_w == \"tanoa\") exitWith {\"tanoa\"};",
+   "text": "if (_w == \"lingor3\") exitWith {\"tanoa\"}; //--- VIOC map_lingor: civiles tropicales (Apex) en Lingor\n\t"
+  },
+  {
+   "file": "VIOC_civ_vehicles.sqf",
+   "action": "insert_before",
+   "anchor": "private _cars = switch (true) do {",
+   "text": "if (_world isEqualTo \"lingor3\") then {_world = \"tanoa\"}; //--- VIOC map_lingor: coches civiles tropicales (la lista de Tanoa) en Lingor\n"
+  }
+ ]
+}

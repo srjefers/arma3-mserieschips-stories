@@ -69,6 +69,7 @@ def _find_profile():
 
 DEFAULT_PROFILE = _find_profile()
 ARMA = os.path.expanduser("~/Library/Application Support/Steam/steamapps/common/Arma 3")
+WORKSHOP = os.path.expanduser("~/Library/Application Support/Steam/steamapps/workshop/content/107410")
 TAG = "VIOCWR1"
 KEY_PREFIX = "vioc_war_"
 # Colores de los bandos (validados para daltonismo con la guia dataviz: azul, rojo-naranja, verde agua; gris neutro)
@@ -81,7 +82,11 @@ WORLD_PBO = {
     "stratis": "Addons/map_stratis.pbo",
     "malden": "Addons/map_malden.pbo",
     "enoch": "Enoch/Addons/map_enoch.pbo",
+    "lingor3": os.path.join(WORKSHOP, "718649903", "addons", "lingor3.pbo"),  # mod Lingor/Dingor Island (ruta absoluta)
 }
+# Mundos cuyo roads.shp no trae todos los caminos (Lingor: 172 tramos, la red del .wrp tiene 17 429): basemap dibuja la red
+# de caminos del .wrp (tools/vio_port.py read_wrp), con el tipo por el nombre del modelo.
+WRP_ROADS = {"lingor3"}
 
 
 # =====================================================================================================================
@@ -795,6 +800,21 @@ def read_roads(pbos):
     return [], ""
 
 
+def read_wrp_roads(pbo):
+    """[(tipo, [(x, y), ...]), ...] de la red de caminos del .wrp: sil*/asfl* = carretera principal, asf*/bridge* = camino,
+    el resto (mud*, path*, racetrack*) = pista; sin pistas de aterrizaje ni caminos invisibles."""
+    sys.path.insert(0, _tools_dir())
+    import vio_port as VPORT  # noqa: E402
+    out = []
+    for path, pts in VPORT.read_wrp(pbo)["road_parts"]:
+        m = path.lower().rsplit("\\", 1)[-1]
+        if m.startswith(("runway", "road_invisible")) or len(pts) < 2:
+            continue
+        kind = "main road" if m.startswith(("sil", "asfl")) else "road" if m.startswith(("asf", "bridge")) else "track"
+        out.append((kind, [(float(x), float(y)) for x, y in pts]))
+    return out, os.path.basename(pbo) + " (red de caminos del .wrp)"
+
+
 def _interp_colors(v, stops):
     import numpy as np
     xs = [s[0] for s in stops]
@@ -829,7 +849,10 @@ def cmd_basemap(args):
     print(f"basemap {world}: {pbo}")
     ws, elev, mi = read_terrain(pbo)
     base = os.path.splitext(pbo)[0]
-    roads, roads_src = read_roads([pbo] + sorted(glob.glob(base + "_data*.pbo")) + sorted(glob.glob(base + "*.pbo")))
+    if world.lower() in WRP_ROADS:
+        roads, roads_src = read_wrp_roads(pbo)
+    else:
+        roads, roads_src = read_roads([pbo] + sorted(glob.glob(base + "_data*.pbo")) + sorted(glob.glob(base + "*.pbo")))
     ty, tx = elev.shape
     #--- alturas a S x S (fila 0 = norte)
     f = tx / S

@@ -17,8 +17,10 @@ Everon; the full list is in [docs/ESCENARIOS.md](docs/ESCENARIOS.md). **Tanoa is
 missions:
 
 - **A: Pacific crisis.** US/NATO vs Russia, with tropical gear and only contemporary assets: no 2035 sci-fi and no WWII.
-- **B: Colombia and the US vs the narco-insurgency.** The insurgents strike the capital and the airfields in the
-  first minutes. To win, you take every town; if the insurgency is cornered, it has 8 minutes to recover.
+- **B: Colombia and the US vs the narco-insurgency.** The insurgents strike the capital in the first minutes;
+  the airfields stay key points. To win, you take every town; if the insurgency is cornered, it has 8 minutes to recover.
+
+**Lingor (new):** mission B also runs on Lingor/Dingor Island (Workshop 718649903), a South American jungle map. It uses all the Tanoa systems, a jungle camo and a 2.5 km view distance. The base mission is generated locally with `python3 tools/vio_port.py build lingor`, and `tools/vio_build.py` then builds `lingor_colombia` on it.
 
 Tanoa features (each is a patch in `tools/vio_patches/` and a lobby parameter you can turn off):
 

@@ -72,6 +72,11 @@
 #    Lista en ~/m/p_tropical_col_acs.txt.
 -par=C:/Users/<usuario>/m/p_tropical_col_acs.txt -maxMem=16383 -maxVRAM=8191
 
+# 13) LINGOR, COLOMBIA CONTRA EL NARCO (archivo -par, con tope de memoria): "CW: Colombia y EE.UU. contra la narcoinsurgencia
+#    (Lingor)". Igual que la 12 más el mapa Lingor/Dingor (@lin). La selva de Lingor es pesada: la misión baja la distancia de
+#    visión. Lista en ~/m/p_lingor_col.txt.
+-par=C:/Users/<usuario>/m/p_lingor_col.txt -maxMem=16383 -maxVRAM=8191
+
 # LEYENDA de nombres cortos (~/m/@corto apunta a la misma carpeta que ~/ArmaMods/@largo):
 #   @cba=CBA_A3  @cupc=CUP_Terrains_Core  @cupm=CUP_Terrains_Maps  @cupw=CUP_Weapons  @cupu=CUP_Units  @cupv=CUP_Vehicles
 #   @rhsr=RHSAFRF  @rhsu=RHSUSAF  @rhsg=RHSGREF  @rhst=RHSTERRACORE  @jsrs=JSRS_SOUNDMOD_2025  @fpv=ArmaFPV
@@ -81,7 +86,7 @@
 #   @nue=Nuevos_TRF_QAV  @lmb=LAMBS_Danger  @kjw=KJW_TwoPrimaryWeapons  @san=Sania_Volnorez_EW  @sgr=SER_Grenades
 #   @psc=PiR_SER_Compat  @tco=TrueColor  @hls=HLS_Lighting  @cob=Blastcore_CoB  @cwa=CUP_Terrains_CWA
 #   @em=Enhanced_Movement  @emr=Enhanced_Movement_Rework  @wia=WBK_Immersive_Animations  @dui=DUI_Squad_Radar
-#   @tow=Advanced_Towing  @3de=3den_Enhanced  @acs=ACSTG  @col=Colombian_Armed_Forces_RHS  @esp=Spanish_Voice_Overs
+#   @tow=Advanced_Towing  @3de=3den_Enhanced  @acs=ACSTG  @col=Colombian_Armed_Forces_RHS  @esp=Spanish_Voice_Overs  @lin=Lingor_Dingor  @umb=UMB_Colombia
 #   @tyc=ToW_Core  @thx=ToW_Hilux2016  @tlc=ToW_LandCruiser (Toyota's Of War: técnicas Hilux 2016 y Land Cruiser; líneas 10, 12 y 12b)
 #   GM=Global Mobilization  vn=S.O.G. Prairie Fire  CSLA=CSLA Iron Curtain  WS=Western Sahara  SPE=Spearhead 1944
 #   RF=Reaction Forces  EF=Expeditionary Forces

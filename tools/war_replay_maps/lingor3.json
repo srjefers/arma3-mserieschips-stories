@@ -1,0 +1,11 @@
+{
+ "world": "lingor3",
+ "worldSize": 10240.0,
+ "size": 2048,
+ "pbo": "lingor3.pbo",
+ "roads": "lingor3.pbo (red de caminos del .wrp)",
+ "nroads": 15587,
+ "houses": 5372,
+ "generated": "2026-10-18T12:20:21",
+ "note": "fila 0 = norte; x = 0..worldSize de izquierda a derecha"
+}

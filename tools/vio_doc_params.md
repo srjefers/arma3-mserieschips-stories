@@ -156,3 +156,15 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Mision B: minutos para la insurgencia acorralada | 8 | Con 0 pueblos, la insurgencia tiene este tiempo para tomar uno. Si no lo logra, ganas. |
 | VIOC: Apoyo de EE.UU. para Colombia | Si | Desde el nivel medio: vehículos, aeronaves y armas de EE.UU. en la fábrica y la tienda, 4 especialistas (Javelin, Stinger, M107, M240) y sus fuerzas especiales en las operaciones especiales. |
 | VIOC: Estilo narco en mapas tropicales | Si | La insurgencia (ChDKZ) se viste y se arma como narco tropical: Hilux artilladas, blindado viejo capturado, Mi-8, UH-1H y An-2, lanchas. Sus operaciones especiales son "Sicarios" y "Selva". |
+
+### Misión de Lingor: "CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)" (2026-10-18)
+
+- Se juega con la **línea 13**: la 12 más el mapa Lingor/Dingor (`@lin`).
+- Es la misma guerra que la misión B de Tanoa y tiene los mismos sistemas y opciones de lobby.
+  - Lingor es una isla de selva sudamericana con ríos y puentes.
+  - El gobierno empieza con Maruko (la capital), Maruko Airport, Puntella, San Isabel, Manteria y Corazon; la insurgencia, con Los Peligron, Pancho y Faunaverde, en la selva del sur.
+  - La ofensiva inicial va contra Maruko.
+  - Son 28 pueblos, con 2 aeródromos con pista ILS: Maruko Airport y Aeropuerto Sargento.
+- Diferencias de lobby:
+  - camuflaje de selva ("Main Camo: Jungle");
+  - distancia de visión máxima de 2.5 km, porque la selva es pesada (el Ghostrider la sube a 4 km mientras usas el cañón).

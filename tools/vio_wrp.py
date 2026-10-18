@@ -5,6 +5,7 @@
     La grilla va de sur a norte: el vértice (i, j) está en x = i*g, y = j*g, con g = tamaño del mapa / ancho.
     Entre vértices se interpola bilinealmente. El revisor del diseño lo comparó con CW Takistán:
     mediana 0.00 m y máximo 0.04 m sobre 378 pueblos, campamentos y puntos.
+  - Las entradas comprimidas del PBO (LZSS de BI) se descomprimen (read_entry).
   - Caminos: roads.shp del mismo PBO, si existe; a veces trae un desfase de +200000 m en x, que se quita.
 Solo lee la cabecera del PBO y los bytes del .wrp que necesita (el PBO de Krayina pesa más de 300 MB).
 
@@ -20,8 +21,9 @@ import numpy as np
 
 # ---------------------------------------------------------------- PBO (solo cabecera + una entrada)
 
-def pbo_entries(path):
-    """[(nombre, offset de datos, tamaño, comprimida)] leyendo solo la cabecera del PBO."""
+def pbo_entries(path, with_orig=False):
+    """[(nombre, offset de datos, tamaño, comprimida)] leyendo solo la cabecera del PBO; con with_orig, además el tamaño
+    original (descomprimido) de cada entrada."""
     with open(path, "rb") as f:
         buf = bytearray()
         pos = 0
@@ -62,23 +64,58 @@ def pbo_entries(path):
             first = False
             if name == "":
                 break
-            entries.append([name, 0, size, method == 0x43707273 or orig not in (0, size)])
+            entries.append([name, 0, size, method == 0x43707273 or orig not in (0, size), orig])
         off = pos
         for e in entries:
             e[1] = off
             off += e[2]
-    return [tuple(e) for e in entries]
+    return [tuple(e) if with_orig else tuple(e[:4]) for e in entries]
 
 
-def read_entry(path, suffix, limit=None):
-    """Bytes de la primera entrada cuyo nombre termina en `suffix` (sin distinguir mayúsculas)."""
-    for name, off, size, comp in pbo_entries(path):
-        if name.lower().endswith(suffix.lower()):
-            if comp:
-                raise ValueError(f"{path}: {name} está comprimida (no soportado)")
+def lzss(data, out_len):
+    """Descomprime una entrada de PBO comprimida (LZSS de BI: banderas de 8 bits, referencias de 12 bits de distancia y
+    3-18 bytes; los 4 últimos bytes son la suma de los bytes descomprimidos). Python puro (Lingor: 70 MB en unos segundos)."""
+    out = bytearray()
+    i, n, olen = 0, len(data), 0
+    while olen < out_len and i < n:
+        flags = data[i]
+        i += 1
+        for bit in range(8):
+            if olen >= out_len:
+                break
+            if flags & (1 << bit):
+                out.append(data[i])
+                i += 1
+                olen += 1
+            else:
+                b1, b2 = data[i], data[i + 1]
+                i += 2
+                rpos, rlen = b1 | ((b2 & 0xF0) << 4), (b2 & 0x0F) + 3
+                start = olen - rpos
+                if start >= 0 and start + rlen <= olen:
+                    out += out[start:start + rlen]
+                else:
+                    for k in range(rlen):
+                        out.append(out[start + k] if start + k >= 0 else 0x20)
+                olen += rlen
+    out = bytes(out[:out_len])
+    if len(out) != out_len or (n >= 4 and struct.unpack_from("<I", data, n - 4)[0] != (sum(out) & 0xFFFFFFFF)):
+        raise ValueError("LZSS: tamaño o suma de control distintos")
+    return out
+
+
+def read_entry(path, suffix, limit=None, exact=False):
+    """Bytes de la primera entrada cuyo nombre termina en `suffix` (o es `suffix`, con exact) sin distinguir mayúsculas.
+    Las entradas comprimidas (LZSS, p. ej. todo lingor3.pbo de Lingor) se descomprimen enteras."""
+    for name, off, size, comp, orig in pbo_entries(path, with_orig=True):
+        low = name.lower()
+        if (low == suffix.lower()) if exact else low.endswith(suffix.lower()):
             with open(path, "rb") as f:
                 f.seek(off)
-                return name, f.read(size if limit is None else min(size, limit))
+                if not comp:
+                    return name, f.read(size if limit is None else min(size, limit))
+                data = lzss(f.read(size), orig)
+            return name, data if limit is None else data[:limit]
     return None, None
 
 

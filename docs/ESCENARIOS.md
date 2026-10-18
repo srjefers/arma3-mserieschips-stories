@@ -106,6 +106,14 @@ Igual que la 12 más ACSTG (la IA no ve a través de la hierba). Sirve para prob
 -par=C:/Users/<usuario>/m/p_tropical_col_acs.txt -maxMem=16383 -maxVRAM=8191
 ```
 
+**13) LINGOR, COLOMBIA CONTRA EL NARCO (archivo -par, con tope de memoria)**
+
+"CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)". Igual que la 12 más el mapa Lingor/Dingor (@lin). La selva de Lingor es pesada: la misión baja la distancia de visión. Lista en ~/m/p_lingor_col.txt.
+
+```
+-par=C:/Users/<usuario>/m/p_lingor_col.txt -maxMem=16383 -maxVRAM=8191
+```
+
 **LEYENDA de nombres cortos (~/m/@corto apunta a la misma carpeta que ~/ArmaMods/@largo)**
 
 | Nombre corto | Mod |
@@ -158,6 +166,8 @@ Igual que la 12 más ACSTG (la IA no ve a través de la hierba). Sirve para prob
 | `@acs` | ACSTG |
 | `@col` | Colombian_Armed_Forces_RHS |
 | `@esp` | Spanish_Voice_Overs |
+| `@lin` | Lingor_Dingor |
+| `@umb` | UMB_Colombia |
 | `@tyc` | ToW_Core |
 | `@thx` | ToW_Hilux2016 |
 | `@tlc` | ToW_LandCruiser (Toyota's Of War: técnicas Hilux 2016 y Land Cruiser; líneas 10, 12 y 12b) |
@@ -328,6 +338,18 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Apoyo de EE.UU. para Colombia | Si | Desde el nivel medio: vehículos, aeronaves y armas de EE.UU. en la fábrica y la tienda, 4 especialistas (Javelin, Stinger, M107, M240) y sus fuerzas especiales en las operaciones especiales. |
 | VIOC: Estilo narco en mapas tropicales | Si | La insurgencia (ChDKZ) se viste y se arma como narco tropical: Hilux artilladas, blindado viejo capturado, Mi-8, UH-1H y An-2, lanchas. Sus operaciones especiales son "Sicarios" y "Selva". |
 
+### Misión de Lingor: "CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)" (2026-10-18)
+
+- Se juega con la **línea 13**: la 12 más el mapa Lingor/Dingor (`@lin`).
+- Es la misma guerra que la misión B de Tanoa y tiene los mismos sistemas y opciones de lobby.
+  - Lingor es una isla de selva sudamericana con ríos y puentes.
+  - El gobierno empieza con Maruko (la capital), Maruko Airport, Puntella, San Isabel, Manteria y Corazon; la insurgencia, con Los Peligron, Pancho y Faunaverde, en la selva del sur.
+  - La ofensiva inicial va contra Maruko.
+  - Son 28 pueblos, con 2 aeródromos con pista ILS: Maruko Airport y Aeropuerto Sargento.
+- Diferencias de lobby:
+  - camuflaje de selva ("Main Camo: Jungle");
+  - distancia de visión máxima de 2.5 km, porque la selva es pesada (el Ghostrider la sube a 4 km mientras usas el cañón).
+
 ## Misiones CW (Warfare)
 
 Se juegan con la **línea 6** (las de Tanoa, con la **10**; "CW: Selva 2026", con la **1V**), en **MULTIPLAYER → SERVER BROWSER → Host Server (LAN)**: eliges el mapa a la izquierda y la misión a la derecha. Todas empiezan por "CW:" (o "BECTI clásica") para encontrarlas juntas. Cada una guarda su partida por separado. Las marcadas "Requiere CUP y RHS" también: esas líneas ya traen RHS.
@@ -485,6 +507,13 @@ Se juegan con la **línea 6** (las de Tanoa, con la **10**; "CW: Selva 2026", co
   - Como en la campaña de Operation Flashpoint, el Pacto de Varsovia (aquí el ejército de Alemania Oriental) desembarca en Everon: empieza con los pueblos a menos de 3 km de su base y con más dinero. Los pueblos siguientes los defienden partisanos (guerrilla de CUP) y los del fondo la Bundeswehr. Elige el Oeste para defender o el Este para invadir. Misión generada por nosotros, todavía sin probar en el juego. Requiere Global Mobilization, CUP y CUP Terrains - CWA (línea 6).
   - Se arma desde: `work/vio_port/VIOBECTICW_EVERON.Eden` (`tools/vio_port.py build`)
   - Carpeta: `mpmissions/VIOBECTICW_GM_INVASION_everon.Eden`
+
+### Lingor
+
+- **CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)**
+  - Lingor, isla de selva sudamericana con rios y puentes. El Oeste es Colombia (Ejercito Nacional, Infanteria de Marina, Fuerza Aerea y Policia) con apoyo de EE. UU. (blindados, artilleria, AH-64, A-10, drones) y defiende Maruko, la capital, y su aeropuerto; la narcoinsurgencia empieza en la selva del sur y abre la guerra con una ofensiva contra Maruko. 28 pueblos. Mision generada por nosotros, todavia sin probar en el juego. Requiere CUP, CUP Terrains - Core, RHS, el mod Colombian Armed Forces RHS, el mapa Lingor/Dingor Island y los DLC Apex y Jets. Selva pesada: distancia de vision de 2,5 km.
+  - Se arma desde: `work/vio_port/VIOBECTICW_LINGOR.lingor3` (`tools/vio_port.py build`)
+  - Carpeta: `mpmissions/VIOBECTICW_COL_lingor.lingor3`
 
 ## Otras misiones y campañas
 

@@ -181,9 +181,14 @@ TREE_KEYS = ("\\tree\\", "a2_tree", "str jedle", "cwa_larch", "silverspruce", "l
 BUSH_KEYS = ("\\bush\\", "a2_bush", "krovi", "ker deravej")
 
 
-def classify_model(path):
-    """(kind, radius) of a terrain object model; kind None = ignored (clutter, roads, decals, water props)."""
+def classify_model(path, rules=()):
+    """(kind, radius) of a terrain object model; kind None = ignored (clutter, roads, decals, water props).
+    `rules` = the terrain's "model_rules" ([substring of the lower-case model path, kind or None, radius], ...), checked
+    first (the built-in keys below were written for CWA/A2 objects; Lingor's jungle needs its own)."""
     p = path.lower()
+    for key, kind, radius in rules:
+        if key.lower() in p:
+            return kind, float(radius)
     base = p.rsplit("\\", 1)[-1].rsplit(".", 1)[0]
     if any(k in p for k in OBSTACLE_IGNORE):
         return None, 0.0
@@ -320,7 +325,9 @@ class TerrainData:
         self.T = WRP.Terrain(w["elev"], w["size"], np.array(segs).reshape(-1, 4), source=w["source"])
         self.size = float(w["size"])
         self.roads = SegmentGrid(self.T.segs)
-        kinds = [classify_model(m) for m in w["models"]]
+        self.road_parts = w["road_parts"]
+        rules = tcfg.get("model_rules", [])
+        kinds = [classify_model(m, rules) for m in w["models"]]
         objs = w["objects"]
         mi = objs["m"]
         scale = np.clip(np.linalg.norm(mi[:, 0:3], axis=1), 0.5, 3.0)
@@ -342,7 +349,8 @@ class TerrainData:
             c = Counter(kind)
             say(f"{self.T.source}: OPRW v{self.version}, mapa {self.size:.0f} m, grilla {self.T.tx} (g={self.T.g:.2f} m), "
                 f"{self.n_objects} objetos ({', '.join(f'{k or 'ignorados'} {v}' for k, v in c.most_common())}), "
-                f"{len(self.T.segs)} tramos de camino, {self.load_s:.1f} s")
+                f"{len(self.T.segs)} tramos de camino, {self.load_s:.1f} s"
+                + (f"; tierra unida por caminos: {len(self.joins)} uniones" if self.joins else ""))
 
     def _label_land(self):
         """4-connected land components on the height grid (h > 0)."""
@@ -366,12 +374,66 @@ class TerrainData:
                                 if 0 <= jj < ty and 0 <= ii < tx and land[jj, ii] and not lab[jj, ii]:
                                     lab[jj, ii] = n
                                     q.append((jj, ii))
+        self.joins = []
+        if self.cfg.get("join_land_by_roads"):
+            lab = self._join_by_roads(lab)
         self.labels = lab
-        self.n_components = int(lab.max())
+        self.n_components = int(len(np.unique(lab)) - (1 if (lab == 0).any() else 0))
         sizes = np.bincount(lab.ravel())
         sizes[0] = 0
         self.main_component = int(sizes.argmax())
         self.component_km2 = {int(k): float(v) * self.T.g ** 2 / 1e6 for k, v in enumerate(sizes) if k and v}
+
+    def _join_by_roads(self, lab):
+        """"join_land_by_roads": land components touched by one connected road network (pieces joined end to end, within
+        2 m) count as one: bridges and fords are road pieces over water in the .wrp. Lingor: the river splits the north
+        (Maruko) from the south (Calamar) at h <= 0, and 11 bridges plus some fords join them."""
+        from scipy.spatial import cKDTree
+        segs = [(x1, y1, x2, y2, path.rsplit("\\", 1)[-1]) for path, pts in self.road_parts
+                for (x1, y1), (x2, y2) in zip(pts[:-1], pts[1:])]
+        if not segs:
+            return lab
+        m = len(segs)
+        sp = list(range(m))
+
+        def sroot(i):
+            while sp[i] != i:
+                sp[i] = sp[sp[i]]
+                i = sp[i]
+            return i
+        ends = np.array([(s[0], s[1]) for s in segs] + [(s[2], s[3]) for s in segs])
+        for i, j in cKDTree(ends).query_pairs(2.0):
+            a, b = sroot(i % m), sroot(j % m)
+            if a != b:
+                sp[a] = b
+        g, tx, ty = self.T.g, self.T.tx, self.T.ty
+        touch, wet = {}, {}
+        for k, (x1, y1, x2, y2, model) in enumerate(segs):
+            r = sroot(k)
+            for t in np.linspace(0.0, 1.0, max(2, int(np.hypot(x2 - x1, y2 - y1) / 4.0))):
+                x, y = x1 + t * (x2 - x1), y1 + t * (y2 - y1)
+                c = int(lab[int(round(min(max(y / g, 0), ty - 1))), int(round(min(max(x / g, 0), tx - 1)))])
+                if c:
+                    touch.setdefault(r, set()).add(c)
+                else:
+                    wet.setdefault(r, []).append((round(x), round(y), model))
+        parent = list(range(int(lab.max()) + 1))
+
+        def root(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+        for r, comps in touch.items():
+            comps = sorted(comps)
+            for c in comps[1:]:
+                if root(c) != root(comps[0]):
+                    w = wet.get(r, [])
+                    self.joins.append((sorted({z[2] for z in w})[:3], comps[0], c, w[:1] + w[-1:]))
+                    parent[root(c)] = root(comps[0])
+        mp = np.array([root(i) for i in range(len(parent))], dtype=np.int32)
+        mp[0] = 0
+        return mp[lab]
 
     def component(self, x, y):
         i = int(round(min(max(x / self.T.g, 0), self.T.tx - 1)))
@@ -435,9 +497,8 @@ def terrain_for_world(world):
 def read_cfg_worlds(tcfg):
     """CfgWorlds facts from the terrain's rapified config.bin: world class, description, Names (towns)."""
     path = os.path.join(WORKSHOP, tcfg["config_pbo"])
-    p = Pbo(path)
-    e = next(e for e in p.entries if e["name"].lower() == "config.bin")
-    rap = Rap(p.content(e))
+    _name, b = WRP.read_entry(path, "config.bin", exact=True)  # may be LZSS-compressed (Lingor)
+    rap = Rap(b)
     root = rap.tree(rap.root)
     worlds = root.get("cfgworlds", {})
     out = {}
