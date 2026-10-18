@@ -1,0 +1,17 @@
+{
+ "description": "Frente y retaguardia en la mision B (va despues de front_line, solo en tanoa_colombia): keyTick no mantiene la guarnicion presente (vioc_mb_hold) en los pueblos clave de retaguardia y la ofensiva inicial no va a un pueblo de retaguardia.",
+ "steps": [
+  {
+   "file": "VIOC_mission_b.sqf",
+   "action": "insert_after",
+   "anchor": "\t\t\t\t|| {(VIOC_MB_WAVES findIf {((_x select 3) isEqualTo _t) && {!isNull (_x select 0)} && {({alive _x} count (units (_x select 0))) > 0}}) >= 0};",
+   "text": "\n\t\t\tif (_hold && {!isNil \"VIOC_FL_fnc_isRear\"} && {[_t] call VIOC_FL_fnc_isRear} && {(VIOC_MB_WAVES findIf {((_x select 3) isEqualTo _t) && {!isNull (_x select 0)} && {({alive _x} count (units (_x select 0))) > 0}}) < 0}) then {_hold = false}; //--- VIOC front_line: en la retaguardia no se mantiene la guarnicion presente (vioc_mb_hold)"
+  },
+  {
+   "file": "VIOC_mission_b.sqf",
+   "action": "insert_after",
+   "anchor": "\t\tif (!isNull VIOC_MB_CAP && {(VIOC_MB_CAP getVariable [\"cti_town_sideID\", -1]) == CTI_WEST_ID}) then {_res pushBack [VIOC_MB_CAP, 5, 3]};\n\t};",
+   "text": "\n\tif (!isNil \"VIOC_FL_fnc_isRear\") then {_res = _res select {!([_x select 0] call VIOC_FL_fnc_isRear)}}; //--- VIOC front_line: la ofensiva no va a un pueblo de retaguardia (al empezar la capital siempre es frente)"
+  }
+ ]
+}

@@ -25,3 +25,8 @@ tools/war_replay_maps/*.png
 __pycache__/
 *.pyc
 .DS_Store
+
+# --- Archivos temporales de editores ---
+*.swp
+*.swo
+*~

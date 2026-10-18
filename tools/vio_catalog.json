@@ -480,7 +480,7 @@
         "towns_capital",
         "fire_orders",
         "air_support",
-        "ai_tactics", "war_replay"
+        "ai_tactics", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "player_utils", "war_replay"
       ]
     },
     {
@@ -796,7 +796,7 @@
         "towns_capital",
         "fire_orders",
         "air_support",
-        "ai_tactics", "war_replay"
+        "ai_tactics", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "player_utils", "war_replay"
       ]
     },
     {
@@ -1584,7 +1584,7 @@
         "CTI_US_SIDE": "-1",
         "CTI_SOV_SIDE": "-1",
         "CTI_CHDKZ_SIDE": "1",
-        "CTI_EAST_FLAG": "19"
+        "CTI_EAST_FLAG": "19", "CTI_ECONOMY_STARTUP_FUNDS_WEST": "40000", "CTI_ECONOMY_STARTUP_FUNDS_EAST": "40000", "CTI_ECONOMY_STARTUP_FUNDS_WEST_COMMANDER": "60000", "CTI_ECONOMY_STARTUP_FUNDS_EAST_COMMANDER": "60000", "CTI_ECONOMY_STARTUP_SUPPLY_WEST": "25000", "CTI_ECONOMY_STARTUP_SUPPLY_EAST": "25000"
       },
       "patches": [
         "wardrobe",
@@ -1633,7 +1633,7 @@
         "nation_col_v6",
         "nation_col_west",
         "nation_narco",
-        "mission_b_rules", "war_replay"
+        "mission_b_rules", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "front_line_mb", "player_utils", "war_replay"
       ]
     }
   ],

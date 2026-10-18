@@ -30,6 +30,12 @@ Tanoa features (each is a patch in `tools/vio_patches/` and a lobby parameter yo
 | **AI** | The AI drives troops in trucks and dismounts on contact. It counterattacks, runs pincer attacks, and both sides use aircraft. The extra Abrams crew bug is fixed. |
 | **Support on request** | Up to 5 simultaneous special ops, paradrops you can jump with, an MQ-9 high-altitude UAV, A-10 gun runs, a "Ghostrider" gunship (30 min respawn if shot down), and gunners that obey "fire at this point". |
 | **Arsenal help** | Pick any weapon to see its compatible attachments and the ammo it uses. |
+| **Front line** | Towns far from the front are safe rear areas: the AI can neither attack nor capture them, and no garrison AI stays there. The fight stays on the front towns. |
+| **Irregular warfare (mission B)** | Undercover insurgents with hidden pistols (terrible aim), lookouts that report you, roadside IEDs with a triggerman, ambushes and car bombs. Killing unarmed civilians costs money. |
+| **Opening offensive (mission B)** | About 50 insurgents with technicals attack the capital from three directions. Your capital and airfields start manned and defended. |
+| **More AI tools** | Helicopter air assaults (Black Hawk, Chinook, Apache escort), FPV drone operators, ION PMC mercenaries guarding a zone boss, and reinforcements for whoever holds the capital. |
+| **Ghostrider gun** | Take the AC-130's guns yourself: 105/40/20 mm, zoom and thermal, from a classic C-130. |
+| **Quality of life** | Spanish radio voices (mod), up to 8 special ops you can request, straggler cleanup after a capture, your body removed after respawn, and a hold action to delete empty vehicles. |
 | **War replay** | The mission records who held each town. At the end (or anytime, via "Ver historia de la guerra") it replays the whole war on the map in 60 s. `tools/war_replay.py` exports it to HTML or GIF. |
 
 ## Requirements

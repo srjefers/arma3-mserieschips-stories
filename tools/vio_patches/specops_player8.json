@@ -1,0 +1,40 @@
+{
+ "name": "specops_player8",
+ "description": "Operaciones especiales pedidas por el jugador: maximo propio en curso a la vez (VIOC_SPECOPS_MAX_PLAYER, 8 por defecto; tope de soldados pedidos por bando 8 x ese maximo). El maximo de la IA por bando sigue en VIOC_SPECOPS_MAX_ACTIVE (5).",
+ "purpose_es": "Operaciones especiales pedidas por el jugador: maximo propio en curso a la vez (VIOC_SPECOPS_MAX_PLAYER, 8 por defecto; tope de soldados pedidos por bando 8 x ese maximo). El maximo de la IA por bando sigue en VIOC_SPECOPS_MAX_ACTIVE (5).",
+ "source": "work/v6_build/specops_player8 (2026-10-17): make_patch.py",
+ "risks": "Mas soldados pedidos vivos (hasta 64 por bando con 8); los cuenta el presupuesto de IA de perf_cleanup.",
+ "test_in_game_es": "Pedir 6-8 operaciones seguidas con PEDIR: Operacion especial (IA); la 9.a se rechaza.",
+ "steps": [
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "VIOC_SO_MAXUNITS = 10 * VIOC_SO_MAXACTIVE;",
+   "text": "\n//--- VIOC specops_player8: maximo de operaciones PEDIDAS en curso por jugador (lobby VIOC_SPECOPS_MAX_PLAYER, 8 por\n//--- defecto), aparte del maximo de la IA por bando (VIOC_SO_MAXACTIVE).\nVIOC_SO_MAXPLAYER = missionNamespace getVariable [\"VIOC_SPECOPS_MAX_PLAYER\", 8];\nif !(VIOC_SO_MAXPLAYER isEqualType 0) then {VIOC_SO_MAXPLAYER = 8};\nVIOC_SO_MAXPLAYER = ((round VIOC_SO_MAXPLAYER) max 1) min 20;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SO_PREQ_SIDECAP = 8 * VIOC_SO_MAXACTIVE;",
+   "text": "VIOC_SO_PREQ_SIDECAP = 8 * VIOC_SO_MAXPLAYER;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (([_uid] call VIOC_fnc_soPreqCount) >= VIOC_SO_MAXACTIVE) exitWith {format [\"ya tienes %1 operaciones pedidas en curso (maximo %1 a la vez)\", VIOC_SO_MAXACTIVE]};",
+   "text": "if (([_uid] call VIOC_fnc_soPreqCount) >= VIOC_SO_MAXPLAYER) exitWith {format [\"ya tienes %1 operaciones pedidas en curso (maximo %1 a la vez)\", VIOC_SO_MAXPLAYER]};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SO_PREQ_BASER, VIOC_SO_MAXACTIVE];",
+   "text": "VIOC_SO_PREQ_BASER, VIOC_SO_MAXPLAYER];"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "insert_before",
+   "anchor": "\tclass VIOC_SPECOPS_MAX_ACTIVE {",
+   "text": "\tclass VIOC_SPECOPS_MAX_PLAYER {\n\t\ttitle = \"VIOC: Operaciones especiales pedidas por ti: maximo en curso a la vez (aparte del maximo de la IA)\";\n\t\tvalues[] = {1,2,3,5,8,10};\n\t\ttexts[] = {\"1\",\"2\",\"3\",\"5\",\"8\",\"10\"};\n\t\tdefault = 8;\n\t};\n"
+  }
+ ]
+}
