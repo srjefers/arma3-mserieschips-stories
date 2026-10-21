@@ -338,6 +338,7 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 
 - Se juega con la **línea 1V** (archivo `-par`: CUP, RHS, S.O.G. Prairie Fire y los Toyota de Toyota's Of War).
 - Tiene los sistemas V6 de la misión A de Tanoa (la misma lista de parches), sin los de la misión B.
+- **EE.UU. contra mercenarios y guerrilla (2026-10-21):** el Este es la ChDKZ de RHS con el estilo narco ("VIOC: Estilo narco en mapas tropicales"): técnicas Hilux de CUP, Toyota artilladas, vehículos de los mercenarios de ION (SUV blindada, 4WD con LMG o SPG-9), BMP-1 y T-55 viejos, Mi-8, UH-1H y An-2. Nada moderno ni futurista. En los mapas de selva (Tanoa y Selva) los mercenarios de ION visten prendas de ION en tonos de selva (oliva, verde, caqui, chaleco coyote, gorra tan o boonie) en lugar de la ropa urbana. Los mercenarios trabajan para el Este y la guerrilla NPoC tiene los pueblos neutrales. Sin las reglas de la misión B.
 - El mapa empieza **partido 50:50** (con S.O.G. y CUP cargados, el autor de la misión lo fuerza) y las bases salen cerca del frente. No hay pueblos de la guerrilla al inicio.
 - La capital es el pueblo de más valor del mapa (no hay lista curada: decide "TOWNS: Amount"). La victoria por capital y aeródromos solo cuenta si ese bando ganó alguno de esos pueblos en la partida.
 - Civiles y coches civiles con las listas de Tanoa (ropa tropical).
@@ -483,8 +484,8 @@ Se juegan con la **línea 6** (las de Tanoa, con la **10**; "CW: Selva 2026", co
   - Selva, arrozales y ríos de Cam Lao Nam: el ejército de EE.UU. (con milicias CIDG; M113, M48, Huey, Cobra, F-4) contra el ejército de Vietnam del Norte (PT-76, T-54, MiG-21). Con S.O.G. la misión siempre arranca con el mapa partido a la mitad. Se juega con la línea 8 (Vietnam), en cualquiera de los dos bandos. Requiere el DLC S.O.G. Prairie Fire.
   - Se arma desde: [VIO-BECTI-CW Cam Lao Nam V2.0.6](https://steamcommunity.com/sharedfiles/filedetails/?id=3180139142)
   - Carpeta: `mpmissions/VIOBECTICW_SOG_US_PAVN_frente.Cam_Lao_Nam`
-- **CW: Selva 2026, EE.UU. vs Rusia (frente)**
-  - Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra Rusia (CUP) con camuflaje de selva y los sistemas V6 de Tanoa (capital, frente y retaguardia, aeródromos, mercenarios, apoyo aéreo, historia de la guerra). Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP, RHS y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).
+- **CW: Selva 2026, EE.UU. vs mercenarios y guerrilla (frente)**
+  - Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra una guerrilla con mercenarios (ChDKZ de RHS con estilo narco: técnicas Hilux y Toyota, vehículos de los mercenarios de ION, blindados viejos y helicópteros Mi-8 y UH-1H, nada moderno) con camuflaje de selva y los sistemas V6 de Tanoa (capital, frente y retaguardia, aeródromos, mercenarios, apoyo aéreo, historia de la guerra). Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP, RHS y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).
   - Se arma desde: [VIO-BECTI-CW Cam Lao Nam V2.0.6](https://steamcommunity.com/sharedfiles/filedetails/?id=3180139142)
   - Carpeta: `mpmissions/VIOBECTICW_US_RU_selva.Cam_Lao_Nam`
 
