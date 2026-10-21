@@ -126,6 +126,11 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Mercenarios: recompensa por el jefe | 5000 | Para el jugador que lo mata. Esa zona queda 45 min sin mercenarios. |
 | VIOC: Mercenarios: aeródromos y capital tomados | Sí | Además del cuartel general. |
 | VIOC: Mercenarios: a quién sirven en la misión A | Ejército enemigo | En la misión B siempre sirven a la insurgencia. |
+| VIOC: Mercenarios: ataque inicial contra la capital | Sí | En las de Tanoa y en Selva 2026. Una vez, entre los 10 y los 45 min, el bando al que sirven manda 8 a 12 mercenarios en 1 o 2 vehículos contra la capital, si no es suya y es frente. Sale lejos de tu vista y solo si cabe en el tope de IA. |
+| VIOC: Mercenarios: defienden los últimos 2 pueblos | Sí | En las de Tanoa y en Selva 2026. Si ese bando se queda con 1 o 2 pueblos, aparecen un jefe y su escolta en ellos, como en la capital. |
+| VIOC rendimiento: Vehículos de la IA atascados | Sí | Vehículos militares de la IA averiados sin poder moverse, sin combustible, sin munición o aeronaves dañadas en tierra (helicópteros caídos): a los 5 min, sin jugadores cerca ni a la vista, la tripulación baja y sigue a pie, y el vehículo vacío se borra. Nunca tus vehículos ni los de otros sistemas. Los aviones y helicópteros en vuelo con poco combustible, munición o salud ya vuelven solos a un aeródromo propio a repararse (opción de aeródromos). |
+| VIOC drones: Cámara post-impacto | Sí | En las de Tanoa y en Selva 2026. Acción en el dron conectado (Crocus de ArmaFPV, Mavic 3): "Cámara post-impacto: activar". Si el dron estalla, 1 s después otro dron ficticio (una cámara: nadie lo ve ni lo ataca) gira a 40 m sobre el impacto con interfaz de dron y el resultado: vehículos destruidos o dañados, bajas, o FALLO. ESPACIO sale; N cambia la visión (normal, nocturna, térmica). Se corta si te hieren. |
+| VIOC drones: Duración de la cámara post-impacto | 1 min | 1, 1.5 o 2 min. |
 | VIOC: Asalto aéreo de la IA: cada | 15 min | Tu bando manda un Black Hawk con 8 soldados regulares (a veces un Chinook con 14 a 16) a 400-600 m de un pueblo del frente; bajan y atacan. Le cuesta dinero al bando: si eres comandante, lo paga el equipo de IA más rico. La zona de aterrizaje se elige plana y sin antiaérea cerca. |
 | VIOC: Asalto aéreo: probabilidad de escolta / de Chinook | 50 % / 30 % | La escolta es un AH-64D Apache o un Arpía IV que da vueltas unos 5 min sobre la zona de aterrizaje. En la misión B, los aparatos de EE.UU. requieren el nivel aéreo 2. |
 | VIOC: Asalto aéreo: también el bando enemigo | No | La insurgencia con su Mi-8; en la misión A, Rusia. |
@@ -157,14 +162,17 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Apoyo de EE.UU. para Colombia | Si | Desde el nivel medio: vehículos, aeronaves y armas de EE.UU. en la fábrica y la tienda, 4 especialistas (Javelin, Stinger, M107, M240) y sus fuerzas especiales en las operaciones especiales. |
 | VIOC: Estilo narco en mapas tropicales | Si | La insurgencia (ChDKZ) se viste y se arma como narco tropical: Hilux artilladas, blindado viejo capturado, Mi-8, UH-1H y An-2, lanchas. Sus operaciones especiales son "Sicarios" y "Selva". |
 
-### Misión de Lingor: "CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)" (2026-10-18)
+### "CW: Selva 2026" en Cam Lao Nam (2026-10-20)
 
-- Se juega con la **línea 13**: la 12 más el mapa Lingor/Dingor (`@lin`).
-- Es la misma guerra que la misión B de Tanoa y tiene los mismos sistemas y opciones de lobby.
-  - Lingor es una isla de selva sudamericana con ríos y puentes.
-  - El gobierno empieza con Maruko (la capital), Maruko Airport, Puntella, San Isabel, Manteria y Corazon; la insurgencia, con Los Peligron, Pancho y Faunaverde, en la selva del sur.
-  - La ofensiva inicial va contra Maruko.
-  - Son 28 pueblos, con 2 aeródromos con pista ILS: Maruko Airport y Aeropuerto Sargento.
-- Diferencias de lobby:
-  - camuflaje de selva ("Main Camo: Jungle");
-  - distancia de visión máxima de 2.5 km, porque la selva es pesada (el Ghostrider la sube a 4 km mientras usas el cañón).
+- Se juega con la **línea 1V** (archivo `-par`: CUP, RHS, S.O.G. Prairie Fire y los Toyota de Toyota's Of War).
+- Tiene los sistemas V6 de la misión A de Tanoa (la misma lista de parches), sin los de la misión B.
+- El mapa empieza **partido 50:50** (con S.O.G. y CUP cargados, el autor de la misión lo fuerza) y las bases salen cerca del frente. No hay pueblos de la guerrilla al inicio.
+- La capital es el pueblo de más valor del mapa (no hay lista curada: decide "TOWNS: Amount"). La victoria por capital y aeródromos solo cuenta si ese bando ganó alguno de esos pueblos en la partida.
+- Civiles y coches civiles con las listas de Tanoa (ropa tropical).
+- Con el mod Toyota's Of War, la guerrilla de los pueblos también sale en Toyota artilladas (Hilux 2016 y Land Cruiser con M2, SPG-9 o GMG) y la insurgencia usa las Toyota sin armas como coches bomba. Los mercenarios ya las usaban.
+- En todas (Tanoa y Selva) los vehículos de pueblos y grupos salen solo con conductor y artilleros: nadie en los puestos FFV de la caja.
+- Mercenarios mejorados (ataque inicial contra la capital, defensa de los últimos 2 pueblos y mejor puntería que la guerrilla) y limpieza de vehículos atascados de la IA:
+
+| Opción | Por defecto | Qué hace |
+|---|---|---|
+| VIOC rendimiento: Vehículos de la IA atascados | Sí | Vehículos militares de la IA averiados sin poder moverse, sin combustible, sin munición o aeronaves dañadas en tierra (helicópteros caídos): a los 5 min, sin jugadores cerca ni a la vista, la tripulación baja y sigue a pie, y el vehículo vacío se borra. Nunca tus vehículos ni los de otros sistemas. Los aviones y helicópteros en vuelo con poco combustible, munición o salud ya vuelven solos a un aeródromo propio a repararse (opción de aeródromos). |

@@ -10,12 +10,12 @@ En **Steam → Arma 3 → Propiedades → General → Opciones de lanzamiento** 
 
 Las rutas usan nombres cortos (carpeta ~/m, leyenda al final): el Mac no carga bien los mods si la línea es muy larga (con 912 caracteres fallaba: sin mapas de CUP y soldados sin equipo; con 592 funcionaba). Mantener cada línea por debajo de ~600 caracteres. Las líneas 6 y 10 ("-par=") leen la lista de mods de un archivo en ~/m (copia en la carpeta par/ del proyecto): así la línea de Steam es corta y no hay límite (-par probado en el Mac el 2026-10-13). Los Creator DLC se cargan con el nombre de su carpeta: GM, vn, CSLA, WS, SPE, RF, EF. Toda línea con JSRS lleva también WS: JSRS declara el mapa Sefrou-Ramal y sin WS el juego avisa "No entry ...CfgWorlds/sefrouramal.description".
 
-**1V) SELVA 2026 (569 caracteres)**
+**1V) SELVA 2026 (archivo -par, con tope de memoria)**
 
-CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire. SOLO para "CW: Selva 2026" en Cam Lao Nam: con S.O.G. y CUP cargados, cualquier misión CW arranca con los pueblos repartidos 50:50 (error del autor).
+CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire y los Toyota de Toyota's Of War (@tyc, @thx, @tlc). SOLO para "CW: Selva 2026" en Cam Lao Nam. Con S.O.G. y CUP cargados, las misiones CW arrancan con los pueblos repartidos 50:50 (error del autor); Selva 2026 lo usa a propósito y empieza cerca del frente. Lista en ~/m/p_selva.txt (645 caracteres: por eso -par).
 
 ```
--mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@fal
+-par=C:/Users/<usuario>/m/p_selva.txt -maxMem=16383 -maxVRAM=8191
 ```
 
 **2) UKRAINE WAR (386 caracteres)**
@@ -106,14 +106,6 @@ Igual que la 12 más ACSTG (la IA no ve a través de la hierba). Sirve para prob
 -par=C:/Users/<usuario>/m/p_tropical_col_acs.txt -maxMem=16383 -maxVRAM=8191
 ```
 
-**13) LINGOR, COLOMBIA CONTRA EL NARCO (archivo -par, con tope de memoria)**
-
-"CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)". Igual que la 12 más el mapa Lingor/Dingor (@lin). La selva de Lingor es pesada: la misión baja la distancia de visión. Lista en ~/m/p_lingor_col.txt.
-
-```
--par=C:/Users/<usuario>/m/p_lingor_col.txt -maxMem=16383 -maxVRAM=8191
-```
-
 **LEYENDA de nombres cortos (~/m/@corto apunta a la misma carpeta que ~/ArmaMods/@largo)**
 
 | Nombre corto | Mod |
@@ -166,7 +158,6 @@ Igual que la 12 más ACSTG (la IA no ve a través de la hierba). Sirve para prob
 | `@acs` | ACSTG |
 | `@col` | Colombian_Armed_Forces_RHS |
 | `@esp` | Spanish_Voice_Overs |
-| `@lin` | Lingor_Dingor |
 | `@umb` | UMB_Colombia |
 | `@tyc` | ToW_Core |
 | `@thx` | ToW_Hilux2016 |
@@ -307,6 +298,11 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Mercenarios: recompensa por el jefe | 5000 | Para el jugador que lo mata. Esa zona queda 45 min sin mercenarios. |
 | VIOC: Mercenarios: aeródromos y capital tomados | Sí | Además del cuartel general. |
 | VIOC: Mercenarios: a quién sirven en la misión A | Ejército enemigo | En la misión B siempre sirven a la insurgencia. |
+| VIOC: Mercenarios: ataque inicial contra la capital | Sí | En las de Tanoa y en Selva 2026. Una vez, entre los 10 y los 45 min, el bando al que sirven manda 8 a 12 mercenarios en 1 o 2 vehículos contra la capital, si no es suya y es frente. Sale lejos de tu vista y solo si cabe en el tope de IA. |
+| VIOC: Mercenarios: defienden los últimos 2 pueblos | Sí | En las de Tanoa y en Selva 2026. Si ese bando se queda con 1 o 2 pueblos, aparecen un jefe y su escolta en ellos, como en la capital. |
+| VIOC rendimiento: Vehículos de la IA atascados | Sí | Vehículos militares de la IA averiados sin poder moverse, sin combustible, sin munición o aeronaves dañadas en tierra (helicópteros caídos): a los 5 min, sin jugadores cerca ni a la vista, la tripulación baja y sigue a pie, y el vehículo vacío se borra. Nunca tus vehículos ni los de otros sistemas. Los aviones y helicópteros en vuelo con poco combustible, munición o salud ya vuelven solos a un aeródromo propio a repararse (opción de aeródromos). |
+| VIOC drones: Cámara post-impacto | Sí | En las de Tanoa y en Selva 2026. Acción en el dron conectado (Crocus de ArmaFPV, Mavic 3): "Cámara post-impacto: activar". Si el dron estalla, 1 s después otro dron ficticio (una cámara: nadie lo ve ni lo ataca) gira a 40 m sobre el impacto con interfaz de dron y el resultado: vehículos destruidos o dañados, bajas, o FALLO. ESPACIO sale; N cambia la visión (normal, nocturna, térmica). Se corta si te hieren. |
+| VIOC drones: Duración de la cámara post-impacto | 1 min | 1, 1.5 o 2 min. |
 | VIOC: Asalto aéreo de la IA: cada | 15 min | Tu bando manda un Black Hawk con 8 soldados regulares (a veces un Chinook con 14 a 16) a 400-600 m de un pueblo del frente; bajan y atacan. Le cuesta dinero al bando: si eres comandante, lo paga el equipo de IA más rico. La zona de aterrizaje se elige plana y sin antiaérea cerca. |
 | VIOC: Asalto aéreo: probabilidad de escolta / de Chinook | 50 % / 30 % | La escolta es un AH-64D Apache o un Arpía IV que da vueltas unos 5 min sobre la zona de aterrizaje. En la misión B, los aparatos de EE.UU. requieren el nivel aéreo 2. |
 | VIOC: Asalto aéreo: también el bando enemigo | No | La insurgencia con su Mi-8; en la misión A, Rusia. |
@@ -338,17 +334,20 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Apoyo de EE.UU. para Colombia | Si | Desde el nivel medio: vehículos, aeronaves y armas de EE.UU. en la fábrica y la tienda, 4 especialistas (Javelin, Stinger, M107, M240) y sus fuerzas especiales en las operaciones especiales. |
 | VIOC: Estilo narco en mapas tropicales | Si | La insurgencia (ChDKZ) se viste y se arma como narco tropical: Hilux artilladas, blindado viejo capturado, Mi-8, UH-1H y An-2, lanchas. Sus operaciones especiales son "Sicarios" y "Selva". |
 
-### Misión de Lingor: "CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)" (2026-10-18)
+### "CW: Selva 2026" en Cam Lao Nam (2026-10-20)
 
-- Se juega con la **línea 13**: la 12 más el mapa Lingor/Dingor (`@lin`).
-- Es la misma guerra que la misión B de Tanoa y tiene los mismos sistemas y opciones de lobby.
-  - Lingor es una isla de selva sudamericana con ríos y puentes.
-  - El gobierno empieza con Maruko (la capital), Maruko Airport, Puntella, San Isabel, Manteria y Corazon; la insurgencia, con Los Peligron, Pancho y Faunaverde, en la selva del sur.
-  - La ofensiva inicial va contra Maruko.
-  - Son 28 pueblos, con 2 aeródromos con pista ILS: Maruko Airport y Aeropuerto Sargento.
-- Diferencias de lobby:
-  - camuflaje de selva ("Main Camo: Jungle");
-  - distancia de visión máxima de 2.5 km, porque la selva es pesada (el Ghostrider la sube a 4 km mientras usas el cañón).
+- Se juega con la **línea 1V** (archivo `-par`: CUP, RHS, S.O.G. Prairie Fire y los Toyota de Toyota's Of War).
+- Tiene los sistemas V6 de la misión A de Tanoa (la misma lista de parches), sin los de la misión B.
+- El mapa empieza **partido 50:50** (con S.O.G. y CUP cargados, el autor de la misión lo fuerza) y las bases salen cerca del frente. No hay pueblos de la guerrilla al inicio.
+- La capital es el pueblo de más valor del mapa (no hay lista curada: decide "TOWNS: Amount"). La victoria por capital y aeródromos solo cuenta si ese bando ganó alguno de esos pueblos en la partida.
+- Civiles y coches civiles con las listas de Tanoa (ropa tropical).
+- Con el mod Toyota's Of War, la guerrilla de los pueblos también sale en Toyota artilladas (Hilux 2016 y Land Cruiser con M2, SPG-9 o GMG) y la insurgencia usa las Toyota sin armas como coches bomba. Los mercenarios ya las usaban.
+- En todas (Tanoa y Selva) los vehículos de pueblos y grupos salen solo con conductor y artilleros: nadie en los puestos FFV de la caja.
+- Mercenarios mejorados (ataque inicial contra la capital, defensa de los últimos 2 pueblos y mejor puntería que la guerrilla) y limpieza de vehículos atascados de la IA:
+
+| Opción | Por defecto | Qué hace |
+|---|---|---|
+| VIOC rendimiento: Vehículos de la IA atascados | Sí | Vehículos militares de la IA averiados sin poder moverse, sin combustible, sin munición o aeronaves dañadas en tierra (helicópteros caídos): a los 5 min, sin jugadores cerca ni a la vista, la tripulación baja y sigue a pie, y el vehículo vacío se borra. Nunca tus vehículos ni los de otros sistemas. Los aviones y helicópteros en vuelo con poco combustible, munición o salud ya vuelven solos a un aeródromo propio a repararse (opción de aeródromos). |
 
 ## Misiones CW (Warfare)
 
@@ -485,7 +484,7 @@ Se juegan con la **línea 6** (las de Tanoa, con la **10**; "CW: Selva 2026", co
   - Se arma desde: [VIO-BECTI-CW Cam Lao Nam V2.0.6](https://steamcommunity.com/sharedfiles/filedetails/?id=3180139142)
   - Carpeta: `mpmissions/VIOBECTICW_SOG_US_PAVN_frente.Cam_Lao_Nam`
 - **CW: Selva 2026, EE.UU. vs Rusia (frente)**
-  - Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra Rusia (CUP) con camuflaje de selva. Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).
+  - Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra Rusia (CUP) con camuflaje de selva y los sistemas V6 de Tanoa (capital, frente y retaguardia, aeródromos, mercenarios, apoyo aéreo, historia de la guerra). Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP, RHS y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).
   - Se arma desde: [VIO-BECTI-CW Cam Lao Nam V2.0.6](https://steamcommunity.com/sharedfiles/filedetails/?id=3180139142)
   - Carpeta: `mpmissions/VIOBECTICW_US_RU_selva.Cam_Lao_Nam`
 
@@ -507,13 +506,6 @@ Se juegan con la **línea 6** (las de Tanoa, con la **10**; "CW: Selva 2026", co
   - Como en la campaña de Operation Flashpoint, el Pacto de Varsovia (aquí el ejército de Alemania Oriental) desembarca en Everon: empieza con los pueblos a menos de 3 km de su base y con más dinero. Los pueblos siguientes los defienden partisanos (guerrilla de CUP) y los del fondo la Bundeswehr. Elige el Oeste para defender o el Este para invadir. Misión generada por nosotros, todavía sin probar en el juego. Requiere Global Mobilization, CUP y CUP Terrains - CWA (línea 6).
   - Se arma desde: `work/vio_port/VIOBECTICW_EVERON.Eden` (`tools/vio_port.py build`)
   - Carpeta: `mpmissions/VIOBECTICW_GM_INVASION_everon.Eden`
-
-### Lingor
-
-- **CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)**
-  - Lingor, isla de selva sudamericana con rios y puentes. El Oeste es Colombia (Ejercito Nacional, Infanteria de Marina, Fuerza Aerea y Policia) con apoyo de EE. UU. (blindados, artilleria, AH-64, A-10, drones) y defiende Maruko, la capital, y su aeropuerto; la narcoinsurgencia empieza en la selva del sur y abre la guerra con una ofensiva contra Maruko. 28 pueblos. Mision generada por nosotros, todavia sin probar en el juego. Requiere CUP, CUP Terrains - Core, RHS, el mod Colombian Armed Forces RHS, el mapa Lingor/Dingor Island y los DLC Apex y Jets. Selva pesada: distancia de vision de 2,5 km.
-  - Se arma desde: `work/vio_port/VIOBECTICW_LINGOR.lingor3` (`tools/vio_port.py build`)
-  - Carpeta: `mpmissions/VIOBECTICW_COL_lingor.lingor3`
 
 ## Otras misiones y campañas
 

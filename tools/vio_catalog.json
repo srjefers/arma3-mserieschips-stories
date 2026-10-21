@@ -61,12 +61,6 @@
       "map": "Tanoa",
       "title": "VIO-BECTI-CW Tanoa V2.0.6"
     },
-    "cw_lingor": {
-      "path": "work/vio_port/VIOBECTICW_LINGOR.lingor3",
-      "world": "lingor3",
-      "map": "Lingor",
-      "title": "VIO-BECTI-CW Lingor (port generado con tools/vio_port.py desde CW Malden 2.0.6)"
-    },
     "cw_altis": {
       "workshop": "1758094892",
       "world": "Altis",
@@ -479,14 +473,14 @@
         "contemporary_assets",
         "ai_transport",
         "specops_multi",
-        "crew_fix",
+        "crew_fix", "crew_ffv",
         "uav_request",
         "ai_air_teams",
         "para_join",
         "towns_capital",
         "fire_orders",
         "air_support",
-        "ai_tactics", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "player_utils", "war_replay"
+        "ai_tactics", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "killcam", "mercenaries", "merc_ops", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "player_utils", "perf_stuck", "war_replay"
       ]
     },
     {
@@ -795,14 +789,14 @@
         "contemporary_assets",
         "ai_transport",
         "specops_multi",
-        "crew_fix",
+        "crew_fix", "crew_ffv",
         "uav_request",
         "ai_air_teams",
         "para_join",
         "towns_capital",
         "fire_orders",
         "air_support",
-        "ai_tactics", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "player_utils", "war_replay"
+        "ai_tactics", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "killcam", "mercenaries", "merc_ops", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "player_utils", "perf_stuck", "war_replay"
       ]
     },
     {
@@ -1323,7 +1317,7 @@
       "source": "cw_camlaonam",
       "common": "cw",
       "name": "CW: Selva 2026, EE.UU. vs Rusia (frente)",
-      "overview": "Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra Rusia (CUP) con camuflaje de selva. Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).",
+      "overview": "Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra Rusia (CUP) con camuflaje de selva y los sistemas V6 de Tanoa (capital, frente y retaguardia, aeródromos, mercenarios, apoyo aéreo, historia de la guerra). Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP, RHS y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).",
       "params": {
         "CTI_WEST_TOWNS": "-1",
         "CTI_EAST_TOWNS": "-1",
@@ -1344,13 +1338,15 @@
         "CTI_UKRAIN_SIDE": "-1",
         "CTI_RACS_SIDE": "-1",
         "CTI_WEST_FLAG": "9",
-        "CTI_TOWNS_STARTING_MODE": "1"
+        "CTI_TOWNS_STARTING_MODE": "1",
+        "CTI_VEHICLES_EMPTY_TIMEOUT": "600"
       },
       "patches": [
         "wardrobe",
         "gear_extra",
         "corpses",
         "respawn_anywhere",
+        "civ_vehicles",
         "military_sites",
         "military_sites_statics",
         "ai_squads_resync",
@@ -1360,6 +1356,7 @@
         "ai_roles_motorized",
         "ai_allied_skill",
         "start_near_front",
+        "civ_people",
         "base_structures_style",
         "units_extra_qav",
         "gear_unlock_all",
@@ -1370,7 +1367,38 @@
         "fortifications",
         "ai_specops",
         "ai_loadouts",
-        "weapon_workshop"
+        "weapon_workshop",
+        "perf_cleanup",
+        "forward_bases",
+        "airfields",
+        "specops_player",
+        "weapon_info",
+        "tropical_gear",
+        "contemporary_assets",
+        "ai_transport",
+        "specops_multi",
+        "crew_fix", "crew_ffv",
+        "uav_request",
+        "ai_air_teams",
+        "para_join",
+        "towns_capital",
+        "fire_orders",
+        "air_support",
+        "ai_tactics",
+        "specops_player8",
+        "voices_es",
+        "irregular_warfare", "toyota_guer",
+        "fpv_ai", "killcam",
+        "mercenaries",
+        "merc_ops",
+        "air_assault",
+        "capital_reinforce",
+        "town_cleanup",
+        "front_line",
+        "player_utils",
+        "perf_stuck",
+        "map_cln",
+        "war_replay"
       ]
     },
     {
@@ -1627,7 +1655,7 @@
         "contemporary_assets",
         "ai_transport",
         "specops_multi",
-        "crew_fix",
+        "crew_fix", "crew_ffv",
         "uav_request",
         "ai_air_teams",
         "para_join",
@@ -1639,18 +1667,8 @@
         "nation_col_v6",
         "nation_col_west",
         "nation_narco",
-        "mission_b_rules", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "front_line_mb", "player_utils", "war_replay"
+        "mission_b_rules", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "killcam", "mercenaries", "merc_ops", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "front_line_mb", "player_utils", "perf_stuck", "war_replay"
       ]
-    },
-    {
-      "id": "lingor_colombia",
-      "folder": "VIOBECTICW_COL_lingor",
-      "source": "cw_lingor",
-      "common": "cw",
-      "name": "CW: Colombia y EE.UU. contra la narcoinsurgencia (Lingor)",
-      "overview": "Lingor, isla de selva sudamericana con rios y puentes. El Oeste es Colombia (Ejercito Nacional, Infanteria de Marina, Fuerza Aerea y Policia) con apoyo de EE. UU. (blindados, artilleria, AH-64, A-10, drones) y defiende Maruko, la capital, y su aeropuerto; la narcoinsurgencia empieza en la selva del sur y abre la guerra con una ofensiva contra Maruko. 28 pueblos. Mision generada por nosotros, todavia sin probar en el juego. Requiere CUP, CUP Terrains - Core, RHS, el mod Colombian Armed Forces RHS, el mapa Lingor/Dingor Island y los DLC Apex y Jets. Selva pesada: distancia de vision de 2,5 km.",
-      "params": {"CTI_CUP_ADDON": "1", "CTI_RHS_ADDON": "2", "CTI_WEST_FLAG": "0", "CTI_AI_TEAMS_ENABLED": "6", "CTI_AI_TEAMS_GROUPSIZE": "10", "CTI_TOWNS_RESISTANCE": "2", "CTI_TOWNS_OCCUPATION": "3", "CTI_TOWNS_AMOUNT": "3", "CTI_VEHICLES_EMPTY_TIMEOUT": "600", "CTI_RESPAWN_CAMPS_MODE": "2", "CTI_UNITS_TOWN_PURCHASE": "3", "CTI_US_SIDE": "-1", "CTI_SOV_SIDE": "-1", "CTI_CHDKZ_SIDE": "1", "CTI_EAST_FLAG": "19", "CTI_ECONOMY_STARTUP_FUNDS_WEST": "40000", "CTI_ECONOMY_STARTUP_FUNDS_EAST": "40000", "CTI_ECONOMY_STARTUP_FUNDS_WEST_COMMANDER": "60000", "CTI_ECONOMY_STARTUP_FUNDS_EAST_COMMANDER": "60000", "CTI_ECONOMY_STARTUP_SUPPLY_WEST": "25000", "CTI_ECONOMY_STARTUP_SUPPLY_EAST": "25000", "CTI_CAMO_ACTIVATION": "3", "CTI_GRAPHICS_VD_MAX": "2500"},
-      "patches": ["wardrobe", "gear_extra", "corpses", "respawn_anywhere", "civ_vehicles", "military_sites", "military_sites_statics", "ai_squads_resync", "ai_commander_funds_teams", "ai_skip_naval_research", "ai_skip_gear_research_no_humans", "ai_roles_motorized", "ai_allied_skill", "civ_people", "base_structures_style", "units_extra_qav", "gear_unlock_all", "vehicles_start", "units_extra_dlc", "ai_front_spawn", "camp_ground_fix", "fortifications", "ai_specops", "ai_loadouts", "weapon_workshop", "perf_cleanup", "forward_bases", "airfields", "specops_player", "weapon_info", "tropical_gear", "contemporary_assets", "ai_transport", "specops_multi", "crew_fix", "uav_request", "ai_air_teams", "para_join", "towns_capital", "fire_orders", "air_support", "ai_tactics", "nation_col", "nation_col_v6", "nation_col_west", "nation_narco", "mission_b_rules", "specops_player8", "voices_es", "irregular_warfare", "fpv_ai", "mercenaries", "air_assault", "capital_reinforce", "town_cleanup", "front_line", "front_line_mb", "player_utils", "map_lingor", "war_replay"]
     }
   ],
   "others": [

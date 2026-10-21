@@ -1,0 +1,23 @@
+{
+  "name": "map_cln",
+  "description": "Datos de Cam Lao Nam (worldName cam_lao_nam) para los parches V6, sin tocar sus fuentes: civiles y coches civiles tropicales (las listas de Tanoa). Cada linea solo actua si worldName es cam_lao_nam. tropical_gear (VIOC_TG_WORLDS) y los estilos verdes ya incluyen cam_lao_nam; towns_capital no tiene lista curada (TOWNS: Amount decide) y la capital es el pueblo de mas valor (VIOC_TC_fnc_findCapital).",
+  "purpose_es": "Llevar los sistemas V6 de Tanoa (mision A) a CW: Selva 2026 (cln_2026_selva). Va justo antes de war_replay. Sin parametro de lobby propio.",
+  "source": "Claude, 2026-10-20",
+  "reviewed": "sin revision independiente (solo datos)",
+  "risks": "Ninguno conocido: si una clase no existe, civ_people y civ_vehicles la filtran.",
+  "test_in_game_es": "Linea 1V (p_selva.txt), CW: Selva 2026: civiles con ropa tropical y coches civiles en los pueblos.",
+  "steps": [
+    {
+      "file": "VIOC_civilians.sqf",
+      "action": "insert_before",
+      "anchor": "if (_w == \"tanoa\") exitWith {\"tanoa\"};",
+      "text": "if (_w == \"cam_lao_nam\") exitWith {\"tanoa\"}; //--- VIOC map_cln: civiles tropicales (Apex) en Cam Lao Nam\n\t"
+    },
+    {
+      "file": "VIOC_civ_vehicles.sqf",
+      "action": "insert_before",
+      "anchor": "private _cars = switch (true) do {",
+      "text": "if (_world isEqualTo \"cam_lao_nam\") then {_world = \"tanoa\"}; //--- VIOC map_cln: coches civiles tropicales (la lista de Tanoa) en Cam Lao Nam\n"
+    }
+  ]
+}

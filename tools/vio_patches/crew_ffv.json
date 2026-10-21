@@ -1,0 +1,17 @@
+{
+ "name": "crew_ffv",
+ "description": "Common_ManVehicle.sqf (tripulacion de los vehiculos de los pueblos, Resistencia y ocupacion, y de Common_CreateTeam) llenaba TODAS las torretas, tambien los puestos FFV de pasajero (CargoTurret): un Hilux GMG de Toyota's Of War salia con 6 hombres. Ahora se saltan las torretas que heredan de CargoTurret (como hace crew_fix con la compra de la IA). El conductor y las torretas de arma siguen igual.",
+ "purpose_es": "Que ningun vehiculo de pueblo o de grupo salga con gente sentada en los puestos FFV de la caja (pedido 2026-10-21, fase 2).",
+ "source": "Claude, 2026-10-21",
+ "reviewed": "sin revision independiente (filtro de una lista; no toca dinero ni el final)",
+ "risks": "Un vehiculo de mod cuyo UNICO artillero este en una CargoTurret saldria sin artillero (no se conoce ninguno en las listas usadas).",
+ "test_in_game_es": "Pueblo de la guerrilla con tecnicas: los Hilux y Toyota salen con conductor y artillero, sin pasajeros asomados.",
+ "steps": [
+  {
+   "file": "Common/Functions/Common_ManVehicle.sqf",
+   "action": "insert_before",
+   "anchor": "// _turrets",
+   "text": "//--- VIOC crew_ffv (parche de VIOC; no es del autor de la mision): sin tripulantes en los puestos FFV de pasajero\n//--- (CargoTurret; p. ej. la caja de las Toyota de Toyota's Of War: un Hilux GMG salia con 6 hombres).\n_turrets = _turrets select {\n\tprivate _tc = _config select (_x select 0);\n\tif (count _x > 1) then {_tc = (_tc >> \"turrets\") select (_x select 1)};\n\t!(isClass _tc) || {(([_tc, true] call BIS_fnc_returnParents) findIf {_x == \"CargoTurret\"}) < 0}\n};\n"
+  }
+ ]
+}
