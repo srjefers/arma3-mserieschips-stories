@@ -8,46 +8,46 @@
 # Toda línea con JSRS lleva también WS: JSRS declara el mapa Sefrou-Ramal y sin WS el juego avisa
 # "No entry ...CfgWorlds/sefrouramal.description".
 
-# 1V) SELVA 2026 (archivo -par, con tope de memoria): CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire y
-#     los Toyota de Toyota's Of War (@tyc, @thx, @tlc). SOLO para "CW: Selva 2026" en Cam Lao Nam. Con S.O.G. y CUP cargados,
-#     las misiones CW arrancan con los pueblos repartidos 50:50 (error del autor); Selva 2026 lo usa a propósito y empieza
-#     cerca del frente. Lista en ~/m/p_selva.txt (645 caracteres: por eso -par).
--par=C:/Users/<usuario>/m/p_selva.txt -maxMem=16383 -maxVRAM=8191
+# 2026-11-03: TrueColor (@tco) desaparecio del Workshop (Steam lo borro el 2026-10-31); quitado de todas las lineas.
+
+# 1V) SELVA 2026 (569 caracteres): CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire. SOLO para "CW: Selva 2026" en Cam Lao Nam:
+#     con S.O.G. y CUP cargados, cualquier misión CW arranca con los pueblos repartidos 50:50 (error del autor).
+-mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@fal
 
 # 2) UKRAINE WAR (386 caracteres): Un jugador > Escenarios > "Ukraine war". RHS + el mapa Krayina y sus objetos,
-#    audio y sangre, más granadas SER, TrueColor y Blastcore. Sin CUP (no lo necesita) y sin PiR (la misión tiene su propio
+#    audio y sangre, más granadas SER y Blastcore. Sin CUP (no lo necesita) y sin PiR (la misión tiene su propio
 #    sistema de reaparición).
--mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@cob
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@cob
 
 # 2b) UKRAINE WAR CON DRONES EXTRA (486 caracteres): igual que la 2, más los mods de drones.
 #     La misión ya trae sus propios drones (tu cuadricóptero con granada y carga explosiva; drones suicidas,
 #     bombarderos y el Pchela de reconocimiento rusos). Con esta línea además tienes el FPV y el Mavic en el
 #     arsenal, y la IA (de los dos bandos) puede llevar mochilas FPV. Combinación sin probar: más drones y más difícil.
--mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@cob
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@cob
 
 # 5) ANTISTASI (438 caracteres): MULTIPLAYER > Host Server (LAN) > mapa > Antistasi Ultimate. Tú diriges la guerrilla.
-#    CUP y sus mapas, Isla Pera, Antistasi Ultimate, audio y sangre, más granadas SER, TrueColor, HLS y Blastcore. Sin RHS
+#    CUP y sus mapas, Isla Pera, Antistasi Ultimate, audio y sangre, más granadas SER, HLS y Blastcore. Sin RHS
 #    (Antistasi pide CUP o RHS, no los dos) y sin PiR (Antistasi no lo admite). Con los Creator DLC, usa la 9.
--mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 
 # 6) CW CON TODO (archivo -par): las misiones CW, también las de Weferlingen (Global Mobilization), con los vehículos de
 #    Western Sahara, Reaction Forces y Expeditionary Forces. CUP, RHS, JSRS, drones, inventario 3D, Wardrobe, PiR y sangre, mapa Fallujah, Blackthorn, UK y QAV (@nue), IA LAMBS, segunda arma KJW (tecla 4), inhibidor Sania,
-#    granadas SER (con su parche PiR), TrueColor (Ctrl+Alt+C), iluminación HLS, Blastcore y los mapas CWA (Everon, Nogova,
+#    granadas SER (con su parche PiR), iluminación HLS, Blastcore y los mapas CWA (Everon, Nogova,
 #    Kolgujev, Malden 1985). Lista en ~/m/p_cw.txt.
 -par=C:/Users/<usuario>/m/p_cw.txt
 
 # 7) CREATOR DLC (435 caracteres): campañas y escenarios oficiales de los 7 Creator DLC y misiones del Workshop en sus mapas
 #    (DRO, Impasse, HWS, Desert Ocean...). Con CUP y RHS para las misiones que los usan, audio, sangre y efectos; sin PiR.
--mod=GM;vn;CSLA;WS;SPE;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=GM;vn;CSLA;WS;SPE;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 
 # 8) VIETNAM (361 caracteres): S.O.G. Prairie Fire, "CW: Vietnam 1968" en Cam Lao Nam (los dos bandos),
 #    Insurgency Vietnam y DRO Cam Lao Nam.
 #    Sin CUP ni RHS (con S.O.G. cargado la misión CW fuerza pueblos 50:50 si hay CUP o RHS).
--mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@psc;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@psc;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 
 # 9) ANTISTASI CON CREATOR DLC (455 caracteres): Antistasi Ultimate también en Weferlingen, Cam Lao Nam, Khe Sanh, Gabreta
 #    y Sefrou-Ramal. Las facciones se eligen a mano al empezar (lista en work/vio_cdlc/solo_modes.md).
--mod=GM;vn;CSLA;WS;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=GM;vn;CSLA;WS;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 
 # 10) TROPICAL, TANOA V6 (archivo -par, con tope de memoria): misiones CW de Tanoa. Como la 6 pero sin GM, sin los
 #    mapas de CUP, CWA ni Fallujah (no hacen falta en Tanoa y ocupan memoria). -maxMem=16383 le pide al motor no pasar de
@@ -81,7 +81,7 @@
 #   @wbk=WBK_Simple_Blood  @ser=SER_Impacts  @dhr=Death_Hit_Reactions  @pdc=PiR_DHR_Compat  @fal=Fallujah_2  @hag=HAG_Objects
 #   @kra=Krayina  @sua=Squad_Ukraine  @arm=Simple_Armbands  @got=Global_Ops_Terrains  @ant=Antistasi_Ultimate
 #   @nue=Nuevos_TRF_QAV  @lmb=LAMBS_Danger  @kjw=KJW_TwoPrimaryWeapons  @san=Sania_Volnorez_EW  @sgr=SER_Grenades
-#   @psc=PiR_SER_Compat  @tco=TrueColor  @hls=HLS_Lighting  @cob=Blastcore_CoB  @cwa=CUP_Terrains_CWA
+#   @psc=PiR_SER_Compat  @hls=HLS_Lighting  @cob=Blastcore_CoB  @cwa=CUP_Terrains_CWA
 #   @em=Enhanced_Movement  @emr=Enhanced_Movement_Rework  @wia=WBK_Immersive_Animations  @dui=DUI_Squad_Radar
 #   @tow=Advanced_Towing  @3de=3den_Enhanced  @acs=ACSTG  @col=Colombian_Armed_Forces_RHS  @esp=Spanish_Voice_Overs  @umb=UMB_Colombia
 #   @tyc=ToW_Core  @thx=ToW_Hilux2016  @tlc=ToW_LandCruiser (Toyota's Of War: técnicas Hilux 2016 y Land Cruiser; líneas 10, 12 y 12b)

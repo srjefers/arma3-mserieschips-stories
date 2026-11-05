@@ -10,20 +10,20 @@ En **Steam → Arma 3 → Propiedades → General → Opciones de lanzamiento** 
 
 Las rutas usan nombres cortos (carpeta ~/m, leyenda al final): el Mac no carga bien los mods si la línea es muy larga (con 912 caracteres fallaba: sin mapas de CUP y soldados sin equipo; con 592 funcionaba). Mantener cada línea por debajo de ~600 caracteres. Las líneas 6 y 10 ("-par=") leen la lista de mods de un archivo en ~/m (copia en la carpeta par/ del proyecto): así la línea de Steam es corta y no hay límite (-par probado en el Mac el 2026-10-13). Los Creator DLC se cargan con el nombre de su carpeta: GM, vn, CSLA, WS, SPE, RF, EF. Toda línea con JSRS lleva también WS: JSRS declara el mapa Sefrou-Ramal y sin WS el juego avisa "No entry ...CfgWorlds/sefrouramal.description".
 
-**1V) SELVA 2026 (archivo -par, con tope de memoria)**
+**1V) SELVA 2026 (569 caracteres)**
 
-CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire y los Toyota de Toyota's Of War (@tyc, @thx, @tlc). SOLO para "CW: Selva 2026" en Cam Lao Nam. Con S.O.G. y CUP cargados, las misiones CW arrancan con los pueblos repartidos 50:50 (error del autor); Selva 2026 lo usa a propósito y empieza cerca del frente. Lista en ~/m/p_selva.txt (645 caracteres: por eso -par).
+CUP, RHS y los mods de la antigua línea 1, más S.O.G. Prairie Fire. SOLO para "CW: Selva 2026" en Cam Lao Nam: con S.O.G. y CUP cargados, cualquier misión CW arranca con los pueblos repartidos 50:50 (error del autor).
 
 ```
--par=C:/Users/<usuario>/m/p_selva.txt -maxMem=16383 -maxVRAM=8191
+-mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@fal
 ```
 
 **2) UKRAINE WAR (386 caracteres)**
 
-Un jugador > Escenarios > "Ukraine war". RHS + el mapa Krayina y sus objetos, audio y sangre, más granadas SER, TrueColor y Blastcore. Sin CUP (no lo necesita) y sin PiR (la misión tiene su propio sistema de reaparición).
+Un jugador > Escenarios > "Ukraine war". RHS + el mapa Krayina y sus objetos, audio y sangre, más granadas SER y Blastcore. Sin CUP (no lo necesita) y sin PiR (la misión tiene su propio sistema de reaparición).
 
 ```
--mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@cob
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@cob
 ```
 
 **2b) UKRAINE WAR CON DRONES EXTRA (486 caracteres)**
@@ -31,20 +31,20 @@ Un jugador > Escenarios > "Ukraine war". RHS + el mapa Krayina y sus objetos, au
 Igual que la 2, más los mods de drones. La misión ya trae sus propios drones (tu cuadricóptero con granada y carga explosiva; drones suicidas, bombarderos y el Pchela de reconocimiento rusos). Con esta línea además tienes el FPV y el Mavic en el arsenal, y la IA (de los dos bandos) puede llevar mochilas FPV. Combinación sin probar: más drones y más difícil.
 
 ```
--mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@cob
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhst;C:/Users/<usuario>/m/@hag;C:/Users/<usuario>/m/@kra;C:/Users/<usuario>/m/@sua;C:/Users/<usuario>/m/@arm;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@fpv;C:/Users/<usuario>/m/@mav;C:/Users/<usuario>/m/@dro;C:/Users/<usuario>/m/@cld;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@cob
 ```
 
 **5) ANTISTASI (438 caracteres)**
 
-MULTIPLAYER > Host Server (LAN) > mapa > Antistasi Ultimate. Tú diriges la guerrilla. CUP y sus mapas, Isla Pera, Antistasi Ultimate, audio y sangre, más granadas SER, TrueColor, HLS y Blastcore. Sin RHS (Antistasi pide CUP o RHS, no los dos) y sin PiR (Antistasi no lo admite). Con los Creator DLC, usa la 9.
+MULTIPLAYER > Host Server (LAN) > mapa > Antistasi Ultimate. Tú diriges la guerrilla. CUP y sus mapas, Isla Pera, Antistasi Ultimate, audio y sangre, más granadas SER, HLS y Blastcore. Sin RHS (Antistasi pide CUP o RHS, no los dos) y sin PiR (Antistasi no lo admite). Con los Creator DLC, usa la 9.
 
 ```
--mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 ```
 
 **6) CW CON TODO (archivo -par)**
 
-Las misiones CW, también las de Weferlingen (Global Mobilization), con los vehículos de Western Sahara, Reaction Forces y Expeditionary Forces. CUP, RHS, JSRS, drones, inventario 3D, Wardrobe, PiR y sangre, mapa Fallujah, Blackthorn, UK y QAV (@nue), IA LAMBS, segunda arma KJW (tecla 4), inhibidor Sania, granadas SER (con su parche PiR), TrueColor (Ctrl+Alt+C), iluminación HLS, Blastcore y los mapas CWA (Everon, Nogova, Kolgujev, Malden 1985). Lista en ~/m/p_cw.txt.
+Las misiones CW, también las de Weferlingen (Global Mobilization), con los vehículos de Western Sahara, Reaction Forces y Expeditionary Forces. CUP, RHS, JSRS, drones, inventario 3D, Wardrobe, PiR y sangre, mapa Fallujah, Blackthorn, UK y QAV (@nue), IA LAMBS, segunda arma KJW (tecla 4), inhibidor Sania, granadas SER (con su parche PiR), iluminación HLS, Blastcore y los mapas CWA (Everon, Nogova, Kolgujev, Malden 1985). Lista en ~/m/p_cw.txt.
 
 ```
 -par=C:/Users/<usuario>/m/p_cw.txt
@@ -55,7 +55,7 @@ Las misiones CW, también las de Weferlingen (Global Mobilization), con los veh�
 Campañas y escenarios oficiales de los 7 Creator DLC y misiones del Workshop en sus mapas (DRO, Impasse, HWS, Desert Ocean...). Con CUP y RHS para las misiones que los usan, audio, sangre y efectos; sin PiR.
 
 ```
--mod=GM;vn;CSLA;WS;SPE;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=GM;vn;CSLA;WS;SPE;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@rhsr;C:/Users/<usuario>/m/@rhsu;C:/Users/<usuario>/m/@rhsg;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 ```
 
 **8) VIETNAM (361 caracteres)**
@@ -63,7 +63,7 @@ Campañas y escenarios oficiales de los 7 Creator DLC y misiones del Workshop en
 S.O.G. Prairie Fire, "CW: Vietnam 1968" en Cam Lao Nam (los dos bandos), Insurgency Vietnam y DRO Cam Lao Nam. Sin CUP ni RHS (con S.O.G. cargado la misión CW fuerza pueblos 50:50 si hay CUP o RHS).
 
 ```
--mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@psc;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=vn;WS;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@war;C:/Users/<usuario>/m/@pir;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@pdc;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@psc;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 ```
 
 **9) ANTISTASI CON CREATOR DLC (455 caracteres)**
@@ -71,7 +71,7 @@ S.O.G. Prairie Fire, "CW: Vietnam 1968" en Cam Lao Nam (los dos bandos), Insurge
 Antistasi Ultimate también en Weferlingen, Cam Lao Nam, Khe Sanh, Gabreta y Sefrou-Ramal. Las facciones se eligen a mano al empezar (lista en work/vio_cdlc/solo_modes.md).
 
 ```
--mod=GM;vn;CSLA;WS;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@tco;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
+-mod=GM;vn;CSLA;WS;RF;EF;C:/Users/<usuario>/m/@cba;C:/Users/<usuario>/m/@cupc;C:/Users/<usuario>/m/@cupm;C:/Users/<usuario>/m/@cupw;C:/Users/<usuario>/m/@cupu;C:/Users/<usuario>/m/@cupv;C:/Users/<usuario>/m/@got;C:/Users/<usuario>/m/@ant;C:/Users/<usuario>/m/@jsrs;C:/Users/<usuario>/m/@inv;C:/Users/<usuario>/m/@wbk;C:/Users/<usuario>/m/@ser;C:/Users/<usuario>/m/@dhr;C:/Users/<usuario>/m/@sgr;C:/Users/<usuario>/m/@hls;C:/Users/<usuario>/m/@cob
 ```
 
 **10) TROPICAL, TANOA V6 (archivo -par, con tope de memoria)**
@@ -145,7 +145,6 @@ Igual que la 12 más ACSTG (la IA no ve a través de la hierba). Sirve para prob
 | `@san` | Sania_Volnorez_EW |
 | `@sgr` | SER_Grenades |
 | `@psc` | PiR_SER_Compat |
-| `@tco` | TrueColor |
 | `@hls` | HLS_Lighting |
 | `@cob` | Blastcore_CoB |
 | `@cwa` | CUP_Terrains_CWA |
@@ -220,6 +219,7 @@ Se cambian en **MULTIPLAYER → Host Server → (eliges la misión) → PARAMETE
 ### Solo en las misiones de Tanoa (V6, 2026-10-16)
 
 Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de la V6. Cuando estén pulidas, esto se pasará a los demás mapas.
+Los vehículos de pueblos y grupos salen solo con conductor y artilleros: nadie en los puestos FFV de la caja (2026-10-21).
 
 **Valores por defecto distintos a las otras misiones:**
 - AI: Teams 6, con escuadras de 10.
@@ -262,8 +262,12 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Dron: precio / duracion / espera entre drones | 2500 / 20 min / 5 min | Se ajustan en el lobby. La espera empieza cuando el dron anterior se retira. |
 | VIOC: Dron: marcar en tu mapa los enemigos que detecta | Si | Cada 15 s, los enemigos que ve el dron (a menos de 1.5 km del centro) aparecen como marcadores solo para ti. |
 | VIOC: Escuadras aereas de la IA por bando | 2 | Cuántas escuadras de IA de cada bando, aliado y enemigo, usan helicópteros y aviones. El original era el 5 % de las escuadras: 1 con 6. Siempre quedan al menos 2 escuadras de tierra. Necesitan la fábrica de aviones y sus mejoras. |
-| VIOC: Saltar con los paracaidistas | Solo en mis pedidos | En el panel de PEDIR, "Saltar con ellos (yo tambien)". Viajas en el avión con un equipo como el de ellos y un paracaídas dirigible, y saltas con el equipo. Si no lo abres (ESPACIO o rueda: Abrir paracaídas), se abre solo a 160 m. Tu equipo anterior vuelve con "Recuperar mi equipo anterior" en la base, un FOB, un camión de munición o un pueblo tuyo. Con las otras opciones también puedes unirte a los saltos de la IA ("UNIRSE AL SALTO", 60 s): estando a 500 m de su base de salida, o desde cualquier parte. |
+| VIOC: Ir con los paracaidistas o en el helicóptero | Solo en mis pedidos | En el panel de PEDIR, "Ir con ellos (yo tambien)", con tipo Paracaidistas o Helicóptero. En helicóptero vas con tu propio equipo y bajas con ellos al aterrizar; el helicóptero espera hasta 10 s a que bajes (2026-11-04). Con paracaidistas viajas en el avión con un equipo como el de ellos y un paracaídas dirigible, y saltas con el equipo. Los paracaidistas que pides caen en el punto que marcaste (o en la tierra más cercana, a menos de 300 m): el avión pasa recto sobre él y cada uno se dirige a su sitio en fila (2026-11-04). Si no lo abres (ESPACIO o rueda: Abrir paracaídas), se abre solo a 160 m. Tu equipo anterior vuelve con "Recuperar mi equipo anterior" en la base, un FOB, un camión de munición o un pueblo tuyo. Con las otras opciones también puedes unirte a los saltos de la IA ("UNIRSE AL SALTO", 60 s): estando a 500 m de su base de salida, o desde cualquier parte. |
 | VIOC: Pueblos en juego (lista curada) | Solo islas con puente (24) | En Tanoa quedan 24 pueblos: la capital, las ciudades grandes, los aeródromos, los puertos y los sitios militares e industriales de la isla principal y de la isla sureste (unida por un puente). "Todas las islas" deja 27. "No" usa TOWNS: Amount como antes. Cambiarla invalida la partida guardada. |
+| VIOC: Bloqueos de la IA enemiga en sus pueblos del frente | 2 por pueblo | En las entradas de los pueblos enemigos del frente (primero los que te quitó, también aeródromos y sitios militares), 3 min después de tomarlos y nunca contigo a menos de 600 m: barreras en las banquinas, neumáticos y un coche ardiendo que cierra un carril. El otro carril queda libre para que la IA no se atasque, y si un vehículo de la IA se queda parado junto al coche 40 s, el coche se quita. Hasta 8 pueblos a la vez; se quitan al perder el pueblo. Aviso cuando bloquea un pueblo que te quitó (2026-11-04). |
+| VIOC: Campamentos avanzados de la IA enemiga / escuadra cada | 2 por bando / 8 min | Un camión con tiendas, red y fogata fuera de los caminos, a 400–900 m de un pueblo enemigo del frente y lejos de lo tuyo. Saca una escuadra de 6 soldados de infantería que ataca tu pueblo más cercano, con un tope de 12 vivos por campamento. Queda destruido cuando un soldado de tu bando llega a pie a 30 m o se destruye el camión; entonces el camión queda libre. No cuesta dinero al enemigo (2026-11-04). |
+| VIOC: Rastreadores enemigos | 1 equipo por jugador | Como en S.O.G.: si pasas 3 min a menos de 1,5 km de un pueblo enemigo, a veces sale un equipo de 5 que sigue tu rastro (va por donde pasaste hace 2,5 min) y, cuando está a 250 m o te ve, va a por ti. Te pierde si te alejas 2,5 km, subes a una aeronave o tu rastro cruza el agua. Después de cada equipo hay 10 min de espera (2026-11-04). |
+| VIOC: Drones aliados en el mapa | Mapa e icono en pantalla | Los drones de tu bando o de un bando amigo (de la IA, FPV o pedidos) aparecen en el mapa y el GPS como "Dron aliado" y llevan un icono en pantalla hasta 2 km. Los enemigos no se marcan (2026-11-04). |
 | VIOC: Capital fortificada | Si | Georgetown lleva 3 veces la guarnición normal (hasta 8 grupos) y 6 estáticas extra (2 antiaéreas, 2 antitanque y 2 ametralladoras). Ninguna base arranca a menos de 2.5 km de ella. |
 | VIOC: Controles en las entradas de la capital | 4 | Controles de carretera a 280–450 m del centro: barreras, señal, bandera y ametralladora, y un antitanque en uno de cada dos. Son del dueño de la capital (la insurgencia al empezar) y cambian de dueño 3 min después de una captura. El carril queda libre para los convoyes. |
 | VIOC: Victoria por la capital y los aerodromos | Si | Gana quien mantenga la capital y todos los pueblos de aeródromo en juego (en Tanoa: Aeroport de Tanoa, Lijnhaven y La Rochelle Aerodrome) durante el tiempo elegido. Vale también para el enemigo. Siguen las victorias originales. |
@@ -298,10 +302,10 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Mercenarios: recompensa por el jefe | 5000 | Para el jugador que lo mata. Esa zona queda 45 min sin mercenarios. |
 | VIOC: Mercenarios: aeródromos y capital tomados | Sí | Además del cuartel general. |
 | VIOC: Mercenarios: a quién sirven en la misión A | Ejército enemigo | En la misión B siempre sirven a la insurgencia. |
-| VIOC: Mercenarios: ataque inicial contra la capital | Sí | En las de Tanoa y en Selva 2026. Una vez, entre los 10 y los 45 min, el bando al que sirven manda 8 a 12 mercenarios en 1 o 2 vehículos contra la capital, si no es suya y es frente. Sale lejos de tu vista y solo si cabe en el tope de IA. |
-| VIOC: Mercenarios: defienden los últimos 2 pueblos | Sí | En las de Tanoa y en Selva 2026. Si ese bando se queda con 1 o 2 pueblos, aparecen un jefe y su escolta en ellos, como en la capital. |
+| VIOC: Mercenarios: ataque inicial contra la capital | Sí | Una vez, entre los 10 y los 45 min, el bando al que sirven manda 8 a 12 mercenarios en 1 o 2 vehículos contra la capital, si no es suya y es frente. Sale lejos de tu vista y solo si cabe en el tope de IA. |
+| VIOC: Mercenarios: defienden los últimos 2 pueblos | Sí | Si ese bando se queda con 1 o 2 pueblos, aparecen un jefe y su escolta en ellos, como en la capital. |
 | VIOC rendimiento: Vehículos de la IA atascados | Sí | Vehículos militares de la IA averiados sin poder moverse, sin combustible, sin munición o aeronaves dañadas en tierra (helicópteros caídos): a los 5 min, sin jugadores cerca ni a la vista, la tripulación baja y sigue a pie, y el vehículo vacío se borra. Nunca tus vehículos ni los de otros sistemas. Los aviones y helicópteros en vuelo con poco combustible, munición o salud ya vuelven solos a un aeródromo propio a repararse (opción de aeródromos). |
-| VIOC drones: Cámara post-impacto | Sí | En las de Tanoa y en Selva 2026. Acción en el dron conectado (Crocus de ArmaFPV, Mavic 3): "Cámara post-impacto: activar". Si el dron estalla, 1 s después otro dron ficticio (una cámara: nadie lo ve ni lo ataca) gira a 40 m sobre el impacto con interfaz de dron y el resultado: vehículos destruidos o dañados, bajas, o FALLO. ESPACIO sale; N cambia la visión (normal, nocturna, térmica). Se corta si te hieren. |
+| VIOC drones: Cámara post-impacto | Sí | Acción en el dron conectado (Crocus de ArmaFPV, Mavic 3): "Cámara post-impacto: activar". Si el dron estalla, 1 s después otro dron ficticio (una cámara: nadie lo ve ni lo ataca) gira a 40 m sobre el impacto con interfaz de dron y el resultado: vehículos destruidos o dañados, bajas, o FALLO. ESPACIO sale; N cambia la visión (normal, nocturna, térmica). Se corta si te hieren. |
 | VIOC drones: Duración de la cámara post-impacto | 1 min | 1, 1.5 o 2 min. |
 | VIOC: Asalto aéreo de la IA: cada | 15 min | Tu bando manda un Black Hawk con 8 soldados regulares (a veces un Chinook con 14 a 16) a 400-600 m de un pueblo del frente; bajan y atacan. Le cuesta dinero al bando: si eres comandante, lo paga el equipo de IA más rico. La zona de aterrizaje se elige plana y sin antiaérea cerca. |
 | VIOC: Asalto aéreo: probabilidad de escolta / de Chinook | 50 % / 30 % | La escolta es un AH-64D Apache o un Arpía IV que da vueltas unos 5 min sobre la zona de aterrizaje. En la misión B, los aparatos de EE.UU. requieren el nivel aéreo 2. |
@@ -333,22 +337,6 @@ Las misiones de Tanoa (A: línea 10; B: línea 12) son la versión de prueba de 
 | VIOC: Mision B: minutos para la insurgencia acorralada | 8 | Con 0 pueblos, la insurgencia tiene este tiempo para tomar uno. Si no lo logra, ganas. |
 | VIOC: Apoyo de EE.UU. para Colombia | Si | Desde el nivel medio: vehículos, aeronaves y armas de EE.UU. en la fábrica y la tienda, 4 especialistas (Javelin, Stinger, M107, M240) y sus fuerzas especiales en las operaciones especiales. |
 | VIOC: Estilo narco en mapas tropicales | Si | La insurgencia (ChDKZ) se viste y se arma como narco tropical: Hilux artilladas, blindado viejo capturado, Mi-8, UH-1H y An-2, lanchas. Sus operaciones especiales son "Sicarios" y "Selva". |
-
-### "CW: Selva 2026" en Cam Lao Nam (2026-10-20)
-
-- Se juega con la **línea 1V** (archivo `-par`: CUP, RHS, S.O.G. Prairie Fire y los Toyota de Toyota's Of War).
-- Tiene los sistemas V6 de la misión A de Tanoa (la misma lista de parches), sin los de la misión B.
-- **EE.UU. contra mercenarios y guerrilla (2026-10-21):** el Este es la ChDKZ de RHS con el estilo narco ("VIOC: Estilo narco en mapas tropicales"): técnicas Hilux de CUP, Toyota artilladas, vehículos de los mercenarios de ION (SUV blindada, 4WD con LMG o SPG-9), BMP-1 y T-55 viejos, Mi-8, UH-1H y An-2. Nada moderno ni futurista. En los mapas de selva (Tanoa y Selva) los mercenarios de ION visten prendas de ION en tonos de selva (oliva, verde, caqui, chaleco coyote, gorra tan o boonie) en lugar de la ropa urbana. Los mercenarios trabajan para el Este y la guerrilla NPoC tiene los pueblos neutrales. Sin las reglas de la misión B.
-- El mapa empieza **partido 50:50** (con S.O.G. y CUP cargados, el autor de la misión lo fuerza) y las bases salen cerca del frente. No hay pueblos de la guerrilla al inicio.
-- La capital es el pueblo de más valor del mapa (no hay lista curada: decide "TOWNS: Amount"). La victoria por capital y aeródromos solo cuenta si ese bando ganó alguno de esos pueblos en la partida.
-- Civiles y coches civiles con las listas de Tanoa (ropa tropical).
-- Con el mod Toyota's Of War, la guerrilla de los pueblos también sale en Toyota artilladas (Hilux 2016 y Land Cruiser con M2, SPG-9 o GMG) y la insurgencia usa las Toyota sin armas como coches bomba. Los mercenarios ya las usaban.
-- En todas (Tanoa y Selva) los vehículos de pueblos y grupos salen solo con conductor y artilleros: nadie en los puestos FFV de la caja.
-- Mercenarios mejorados (ataque inicial contra la capital, defensa de los últimos 2 pueblos y mejor puntería que la guerrilla) y limpieza de vehículos atascados de la IA:
-
-| Opción | Por defecto | Qué hace |
-|---|---|---|
-| VIOC rendimiento: Vehículos de la IA atascados | Sí | Vehículos militares de la IA averiados sin poder moverse, sin combustible, sin munición o aeronaves dañadas en tierra (helicópteros caídos): a los 5 min, sin jugadores cerca ni a la vista, la tripulación baja y sigue a pie, y el vehículo vacío se borra. Nunca tus vehículos ni los de otros sistemas. Los aviones y helicópteros en vuelo con poco combustible, munición o salud ya vuelven solos a un aeródromo propio a repararse (opción de aeródromos). |
 
 ## Misiones CW (Warfare)
 
@@ -484,8 +472,8 @@ Se juegan con la **línea 6** (las de Tanoa, con la **10**; "CW: Selva 2026", co
   - Selva, arrozales y ríos de Cam Lao Nam: el ejército de EE.UU. (con milicias CIDG; M113, M48, Huey, Cobra, F-4) contra el ejército de Vietnam del Norte (PT-76, T-54, MiG-21). Con S.O.G. la misión siempre arranca con el mapa partido a la mitad. Se juega con la línea 8 (Vietnam), en cualquiera de los dos bandos. Requiere el DLC S.O.G. Prairie Fire.
   - Se arma desde: [VIO-BECTI-CW Cam Lao Nam V2.0.6](https://steamcommunity.com/sharedfiles/filedetails/?id=3180139142)
   - Carpeta: `mpmissions/VIOBECTICW_SOG_US_PAVN_frente.Cam_Lao_Nam`
-- **CW: Selva 2026, EE.UU. vs mercenarios y guerrilla (frente)**
-  - Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra una guerrilla con mercenarios (ChDKZ de RHS con estilo narco: técnicas Hilux y Toyota, vehículos de los mercenarios de ION, blindados viejos y helicópteros Mi-8 y UH-1H, nada moderno) con camuflaje de selva y los sistemas V6 de Tanoa (capital, frente y retaguardia, aeródromos, mercenarios, apoyo aéreo, historia de la guerra). Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP, RHS y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).
+- **CW: Selva 2026, EE.UU. vs Rusia (frente)**
+  - Guerra moderna en la selva y los arrozales de Cam Lao Nam: EE.UU. contra Rusia (CUP) con camuflaje de selva. Con S.O.G. cargado la misión siempre arranca con el mapa partido a la mitad. Requiere CUP y el DLC S.O.G. Prairie Fire para el mapa (línea 1V).
   - Se arma desde: [VIO-BECTI-CW Cam Lao Nam V2.0.6](https://steamcommunity.com/sharedfiles/filedetails/?id=3180139142)
   - Carpeta: `mpmissions/VIOBECTICW_US_RU_selva.Cam_Lao_Nam`
 

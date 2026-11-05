@@ -1,0 +1,118 @@
+{
+ "name": "heli_join",
+ "description": "Ir tu tambien en el helicoptero de tu operacion especial pedida: el boton del panel PEDIR pasa a 'Ir con ellos (yo tambien)' y vale para Paracaidistas o Helicoptero. En helicoptero vas con tu equipo (no se cambia), te reserva asiento y bajas con el equipo al aterrizar.",
+ "purpose_es": "Antes solo se podia saltar con los paracaidistas (para_join). Ahora, en el panel PEDIR, 'Ir con ellos (yo tambien)' con tipo Helicoptero: antes de cobrar se comprueba que puedes subir (como en el salto) y se te reserva un asiento; cuando el helicoptero sale te sube a el CON TU EQUIPO; al aterrizar el servidor te baja con el equipo y espera hasta 10 s antes de despegar. Si no puede aterrizar y se vuelve, sales antes (si aun vuela alto, saltas y el paracaidas se abre solo). Si lo alcanzan en el aire, aviso y decides tu (como en el avion). Si el helicoptero no llega y se va a borrar, primero sales (antes se borraba con todos dentro). Las ofertas 'UNIRSE AL SALTO' de la IA siguen siendo solo de paracaidistas. Con tipo Cualquiera o A pie, activar el boton pasa a Paracaidistas (como antes).",
+ "source": "Escrito para este proyecto (2026-11-04).",
+ "risks": "Sin probar en el juego. El jugador va en un helicoptero cerrado (lock 2): baja por script al aterrizar.",
+ "test_in_game_es": "PEDIR: tipo Helicoptero + 'Ir con ellos (yo tambien)', CONFIRMAR: apareces en el helicoptero con tu equipo; al aterrizar bajas con el equipo y el helicoptero se va.",
+ "steps": [
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif (_jump) then {_want = \"para\"};",
+   "text": "\tif (_jump && {!(_want in [\"para\", \"heli\"])}) then {_want = \"para\"};\t//--- VIOC heli_join: tambien en helicoptero"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (_jump) then {_after = _after + \" Saltas con ellos: cuando salga el avion te subimos con equipo de paracaidista (el tuyo queda guardado).\"};",
+   "text": "if (_jump) then {_after = _after + (if (_type == \"heli\") then {\" Vas con ellos: cuando salga el helicoptero te subimos (con tu equipo) y bajas con ellos al aterrizar.\"} else {\" Saltas con ellos: cuando salga el avion te subimos con equipo de paracaidista (el tuyo queda guardado).\"})};\t//--- VIOC heli_join"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _n = (_op get \"size\") min (_veh emptyPositions \"Cargo\");",
+   "text": "\tprivate _n = (_op get \"size\") min ((_veh emptyPositions \"Cargo\") - (count (_op getOrDefault [\"pj\", []])));\t//--- VIOC heli_join: asiento para el jugador"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "\tprivate _pad = createVehicle [\"Land_HelipadEmpty_F\", _lz, [], 0, \"CAN_COLLIDE\"];",
+   "text": "\t[_op, _veh, _team] call VIOC_fnc_pjBoard;\t//--- VIOC heli_join: sube el jugador que lo pidio (con su equipo)\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t//--- el helicoptero no llego (se perdio o dio vueltas): se cancela y se devuelve el dinero\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t\t{deleteVehicle _x} forEach (units _cg);",
+   "text": "\t\t//--- el helicoptero no llego (se perdio o dio vueltas): se cancela y se devuelve el dinero\n\t\t//--- VIOC heli_join: si va un jugador dentro, primero sale; el aparato no se borra con un jugador dentro\n\t\t[_veh, _cg] spawn {params [\"_veh\", \"_cg\"]; [_veh] call VIOC_fnc_pjSafeDelete; {deleteVehicle _x} forEach (units _cg)};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "\tif (_abort) exitWith {\n",
+   "text": "\t//--- VIOC heli_join: el jugador baja con el equipo (o sale antes de que el helicoptero se vuelva). Si lo alcanzaron, decide el\n\tif (alive _veh && {(_how == \"landed\") || {_abort} || {(_how == \"bailout\") && {canMove _veh} && {alive (driver _veh)} && {(damage _veh) <= 0.3}}}) then {[_veh] call VIOC_fnc_pjOut};\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t[_veh, _op get \"pjlo\", _op getOrDefault [\"pjchute\", [\"B_Parachute\", \"Steerable_Parachute_F\"]], (_op get \"pkg\") get \"name\"] remoteExecCall [\"VIOC_PJ_fnc_board\", _p];",
+   "text": "\t[_veh, _op get \"pjlo\", _op getOrDefault [\"pjchute\", [\"B_Parachute\", \"Steerable_Parachute_F\"]], (_op get \"pkg\") get \"name\", (_op getOrDefault [\"type\", \"\"]) == \"heli\"] remoteExecCall [\"VIOC_PJ_fnc_board\", _p];\t//--- VIOC heli_join: + en helicoptero"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif ((_op getOrDefault [\"preq\", \"\"]) isEqualTo \"\" && {VIOC_PJ_MODE >= 2}) then {",
+   "text": "\tif ((_op getOrDefault [\"preq\", \"\"]) isEqualTo \"\" && {VIOC_PJ_MODE >= 2} && {(_op getOrDefault [\"type\", \"\"]) != \"heli\"}) then {\t//--- VIOC heli_join: la oferta de la IA sigue siendo solo de saltos"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "format [\"activo (modo %1, cada %2 min",
+   "text": "//--- VIOC heli_join: el helicoptero aterrizo (o no pudo y se vuelve): los jugadores que van dentro bajan ya (o saltan si\n//--- aun vuela alto; su paracaidas se abre solo). Espera hasta 10 s a que salgan antes de que el helicoptero despegue.\nVIOC_fnc_pjOut = {\n\tparams [\"_veh\"];\n\tif (isNull _veh) exitWith {};\n\tprivate _pl = (crew _veh) select {isPlayer _x};\n\tif (count _pl == 0) exitWith {};\n\t{[_veh] remoteExecCall [\"VIOC_PJ_fnc_out\", _x]} forEach _pl;\n\tprivate _t = time + 10;\n\twaitUntil {sleep 0.5; isNull _veh || {({isPlayer _x} count (crew _veh)) == 0} || {time > _t}};\n};\n\n"
+  },
+  {
+   "file": "VIOC_para_join.sqf",
+   "action": "replace",
+   "anchor": "\tparams [\"_veh\", \"_lo\", \"_chute\", \"_label\"];\n\t[_veh, _lo, _chute, _label] spawn {\n\t\tparams [\"_veh\", \"_lo\", \"_chute\", \"_label\"];",
+   "text": "\tparams [\"_veh\", \"_lo\", \"_chute\", \"_label\", [\"_heli\", false]];\t//--- VIOC heli_join: + en helicoptero (con tu equipo)\n\t[_veh, _lo, _chute, _label, _heli] spawn {\n\t\tparams [\"_veh\", \"_lo\", \"_chute\", \"_label\", \"_heli\"];"
+  },
+  {
+   "file": "VIOC_para_join.sqf",
+   "action": "insert_after",
+   "anchor": "\t\tVIOC_PJ_RIDE = [_veh];",
+   "text": "\n\t\tif (_heli) exitWith {[_veh, _chute, _label] call VIOC_PJ_fnc_rideHeli};\t//--- VIOC heli_join"
+  },
+  {
+   "file": "VIOC_para_join.sqf",
+   "action": "replace",
+   "anchor": "¡El avión fue alcanzado! Salta ahora",
+   "text": "El avion fue alcanzado! Salta ahora"
+  },
+  {
+   "file": "VIOC_para_join.sqf",
+   "action": "append",
+   "anchor": "",
+   "text": "\n//--- VIOC heli_join: ir en el helicoptero de tu operacion pedida, CON TU EQUIPO (no se cambia ni se guarda). Al aterrizar\n//--- el servidor te baja con el equipo (VIOC_PJ_fnc_out). Si lo alcanzan en el aire decides tu si saltas (rueda:\n//--- Saltar/Eject); en la caida el paracaidas se abre solo a VIOC_PJ_OPEN_AGL m (sin dano de caida, como en los saltos).\nVIOC_PJ_fnc_rideHeli = {\n\tparams [\"_veh\", \"_chute\", \"_label\"];\n\tif (vehicle player != player) then {moveOut player; sleep 0.3};\n\tplayer moveInCargo _veh;\n\tsleep 0.5;\n\tif (vehicle player != _veh && {alive _veh}) then {player moveInCargo _veh; sleep 0.5};\n\tif (vehicle player != _veh) exitWith {\n\t\tVIOC_PJ_RIDE = nil;\n\t\t[\"No pudiste subir al helicoptero (sin sitio o ya no esta).\"] call VIOC_PJ_fnc_msg;\n\t};\n\thint parseText format [\"<t size='1.1' color='#ffb27f'>Insercion en helicoptero</t><br/><br/><t align='left'>Vas en el helicoptero de %1 con tu equipo. Cuando aterrice bajas con ellos.<br/><br/>Si lo alcanzan en el aire, decides tu si saltas (rueda: Saltar/Eject); el paracaidas se abre solo a %2 m.</t>\", _label, VIOC_PJ_OPEN_AGL];\n\tprivate _warned = false;\n\twaitUntil {\n\t\tsleep 0.25;\n\t\tif (!_warned && {vehicle player == _veh} && {alive _veh} && {(damage _veh > 0.3) || {!canMove _veh} || {!alive (driver _veh)}} && {(call VIOC_PJ_fnc_agl) > 60}) then {\n\t\t\t_warned = true;\n\t\t\thint parseText \"<t size='1.3' color='#F56363'>El helicoptero fue alcanzado! Salta ahora</t><br/>(rueda: Saltar/Eject)\";\n\t\t};\n\t\t(vehicle player != _veh) || {!alive player}\n\t};\n\tif (alive player && {alive _veh}) then {[[], _chute param [1, \"Steerable_Parachute_F\"], _veh] call VIOC_PJ_fnc_fall};\n\tVIOC_PJ_RIDE = nil;\n};\n\n//--- VIOC heli_join: orden del servidor (VIOC_fnc_pjOut): bajar ya del helicoptero, o saltar si aun vuela alto.\nVIOC_PJ_fnc_out = {\n\tparams [\"_veh\"];\n\tif (isNull _veh || {vehicle player != _veh}) exitWith {};\n\tprivate _h = (getPosATL _veh) select 2;\n\tif (_h > 15) exitWith {[_veh] call VIOC_PJ_fnc_doJump};\n\tif (_h > 3) then {[player, _veh, 20] call VIOC_PJ_fnc_guard};\n\tmoveOut player;\n};\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "if (_i != 1) then {VIOC_SOR_SEL set [3, false]}; call VIOC_SOR_fnc_refresh};\t//--- VIOC para_join: saltar solo con paracaidistas",
+   "text": "if !(_i in [1, 2]) then {VIOC_SOR_SEL set [3, false]}; call VIOC_SOR_fnc_refresh};\t//--- VIOC heli_join: ir con ellos en paracaidistas o helicoptero"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\tif (VIOC_SOR_SEL select 3) then {VIOC_SOR_SEL set [0, 1]};",
+   "text": "\tif ((VIOC_SOR_SEL select 3) && {!((VIOC_SOR_SEL select 0) in [1, 2])}) then {VIOC_SOR_SEL set [0, 1]};\t//--- VIOC heli_join: con Helicoptero se queda en Helicoptero"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SOR_C_PJ ctrlSetText (if (!_pjOn) then {\"Saltar con ellos: desactivado en el lobby\"} else {if (_pj) then {\"Saltar con ellos (yo tambien): SI\"} else {\"Saltar con ellos (yo tambien): NO\"}});",
+   "text": "VIOC_SOR_C_PJ ctrlSetText (if (!_pjOn) then {\"Ir con ellos: desactivado en el lobby\"} else {if (_pj) then {\"Ir con ellos (yo tambien): SI\"} else {\"Ir con ellos (yo tambien): NO\"}});"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "_pjb ctrlSetTooltip \"Solo paracaidistas: subes al avion con equipo de paracaidista y saltas con el equipo (tu equipo de antes queda guardado)\";",
+   "text": "_pjb ctrlSetTooltip \"Paracaidistas: subes al avion con equipo de paracaidista y saltas con ellos (tu equipo queda guardado). Helicoptero: vas con tu equipo y bajas con ellos al aterrizar\";"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "replace",
+   "anchor": "title = \"VIOC: Saltar tu tambien con los paracaidistas (con equipo como el suyo)\";",
+   "text": "title = \"VIOC: Ir tu tambien con los paracaidistas (con equipo como el suyo) o en el helicoptero (con tu equipo)\";"
+  }
+ ]
+}

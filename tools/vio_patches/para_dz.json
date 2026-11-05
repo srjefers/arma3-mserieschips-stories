@@ -1,0 +1,64 @@
+{
+ "name": "para_dz",
+ "description": "Paracaidistas que caen donde se pidio: en los pedidos de un jugador la zona de salto es el punto marcado en el mapa (o la tierra mas cercana a menos de 300 m); el aparato sobrevuela la zona en linea recta (antes giraba 200 m antes de llegar); y cada paracaidista IA se dirige a su punto (en fila, 15 m entre cada uno) corrigiendo viento y desvio, hasta 6 m/s.",
+ "purpose_es": "Antes caian a unos 300-700 m del punto pedido por tres motivos: (1) la zona de salto se buscaba a 60-700 m del objetivo, hacia el lado propio; (2) el punto de paso del aparato estaba en la zona con radio 200 m y despues venia el de vuelta, asi que el avion giraba antes de llegar y la fila caia en la curva; (3) los paracaidas redondos no se dirigen: viento y la fila (unos 400 m a 80 m/s) los separan. Ahora: (1) pedidos de jugador (paracaidistas) = el punto del clic, si es tierra, o la tierra mas cercana a menos de 300 m; las operaciones de la IA siguen buscando su zona como antes; (2) el punto de paso esta 1,5 km despues de la zona en la misma linea; (3) cada paracaidista IA se dirige a su punto (fila de 15 m centrada en la zona) con velocidad distancia/tiempo de caida, tope 6 m/s (desde 250-300 m corrige unos 300 m). Cerca de la zona (350 m) saltan aunque haya agua debajo. Los saltos de emergencia (aparato alcanzado) no se dirigen.",
+ "source": "Escrito para este proyecto (2026-11-04).",
+ "risks": "Sin probar en el juego. setVelocity sobre el paracaidas cada 0,5 s (8 unidades a la vez como mucho por operacion). Si el clic esta sobre un pueblo enemigo, saltan sobre el (es lo pedido).",
+ "test_in_game_es": "Pedir paracaidistas a un punto lejos de pueblos y a un pueblo; mirar en el mapa que caen a menos de unos 80 m del marcador. Saltar con ellos tambien.",
+ "steps": [
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_before",
+   "anchor": "//--- Un paracaidista salta: sale detras y debajo del aparato y baja en su paracaidas (no se le cambia la mochila).",
+   "text": "//--- VIOC para_dz: zona de salto de un pedido de jugador = el punto que marco en el mapa (si cae en agua o en la orilla,\n//--- el punto de tierra mas cercano a menos de 300 m). [] si no hay tierra cerca: se usa la zona de siempre.\nVIOC_fnc_soDZAt = {\n\tparams [\"_at\"];\n\tprivate _p = [_at select 0, _at select 1, 0];\n\tif ([_p, 40] call VIOC_fnc_soIsLand) exitWith {_p};\n\tprivate _res = [];\n\t{\n\t\tprivate _r = _x;\n\t\tfor \"_a\" from 0 to 330 step 30 do {\n\t\t\tprivate _q = _p getPos [_r, _a];\n\t\t\tif ([_q, 40] call VIOC_fnc_soIsLand) exitWith {_res = [_q select 0, _q select 1, 0]};\n\t\t};\n\t\tif (count _res > 0) exitWith {};\n\t} forEach [50, 100, 150, 200, 250, 300];\n\t_res\n};\n\n//--- VIOC para_dz: el paracaidista IA se dirige a su punto de aterrizaje (como quien tira de las lineas del paracaidas):\n//--- cada medio segundo, velocidad horizontal hacia el punto = distancia / tiempo de caida que le queda, con tope de\n//--- VIOC_SO_STEER m/s. Corrige el viento, la fila del salto y una pasada algo desviada del aparato. Solo donde el\n//--- paracaidas es local (el servidor, que lo creo).\nVIOC_SO_STEER = 6;\nVIOC_fnc_soSteer = {\n\tparams [\"_u\", \"_c\", \"_aim\"];\n\tprivate _t = time + 240;\n\tsleep 1.5;\n\twhile {alive _u && {!isNull _c} && {local _c} && {vehicle _u == _c} && {time < _t}} do {\n\t\tprivate _p = getPosASL _c;\n\t\tprivate _h = if (surfaceIsWater _p) then {_p select 2} else {(getPosATL _c) select 2};\n\t\tif (_h < 4) exitWith {};\n\t\tprivate _v = velocity _c;\n\t\tprivate _dx = (_aim select 0) - (_p select 0);\n\t\tprivate _dy = (_aim select 1) - (_p select 1);\n\t\tprivate _d = sqrt ((_dx * _dx) + (_dy * _dy));\n\t\tif (_d < 2) then {\n\t\t\t_c setVelocity [0, 0, _v select 2];\n\t\t} else {\n\t\t\tprivate _s = (_d / ((_h / ((abs (_v select 2)) max 1)) max 1)) min VIOC_SO_STEER;\n\t\t\t_c setVelocity [(_dx / _d) * _s, (_dy / _d) * _s, _v select 2];\n\t\t};\n\t\tsleep 0.5;\n\t};\n};\n\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "VIOC_fnc_soJump = {\n\tparams [\"_u\", \"_veh\", \"_chute\"];",
+   "text": "VIOC_fnc_soJump = {\n\tparams [\"_u\", \"_veh\", \"_chute\", [\"_aim\", []]];\t//--- VIOC para_dz: + punto de aterrizaje (se dirige hacia el)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\t[_u, _c] spawn VIOC_fnc_soLandWatch;",
+   "text": "\n\tif (count _aim > 1 && {vehicle _u == _c}) then {[_u, _c, _aim] spawn VIOC_fnc_soSteer};\t//--- VIOC para_dz"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _w1 = _cg addWaypoint [_dz, 0];\n\t_w1 setWaypointType \"MOVE\";\n\t_w1 setWaypointCompletionRadius 200;",
+   "text": "\t//--- VIOC para_dz: el punto de paso esta 1,5 km DESPUES de la zona de salto, en la misma linea: el aparato la sobrevuela\n\t//--- recto (con el punto en la zona y radio 200 giraba antes de llegar y la fila caia lejos, en la curva)\n\tprivate _w1 = _cg addWaypoint [[_dz getPos [1500, _start getDir _dz]] call VIOC_fnc_soClamp, 0];\n\t_w1 setWaypointType \"MOVE\";\n\t_w1 setWaypointCompletionRadius 300;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\tprivate _left = _jumpers select {alive _x && {vehicle _x == _veh}};\n\t\tprivate _t2 = time + 60;",
+   "text": "\t\tprivate _left = _jumpers select {alive _x && {vehicle _x == _veh}};\n\t\tprivate _t2 = time + 60;\n\t\tprivate _nj = count _left;\t//--- VIOC para_dz: puesto de cada uno en la fila sobre la zona\n\t\tprivate _k = 0;"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t\tif ((_state == \"hit\") || {!surfaceIsWater (getPosASL _veh)} || {time > (_t2 - 15)}) then {\n\t\t\t\tprivate _u = _left deleteAt 0;\n\t\t\t\tif ([_u, _veh, _op get \"chute\"] call VIOC_fnc_soJump) then {_jumped = _jumped + 1};",
+   "text": "\t\t\tif ((_state == \"hit\") || {!surfaceIsWater (getPosASL _veh)} || {(_veh distance2D _dz) < 350} || {time > (_t2 - 15)}) then {\t//--- VIOC para_dz: cerca de la zona saltan aunque haya agua debajo\n\t\t\t\tprivate _u = _left deleteAt 0;\n\t\t\t\t//--- VIOC para_dz: punto de aterrizaje de cada uno, en fila de 15 m centrada en la zona (no en un salto de emergencia)\n\t\t\t\tprivate _aim = if (_state == \"hit\") then {[]} else {_dz getPos [(_k - ((_nj - 1) / 2)) * 15, _start getDir _dz]};\n\t\t\t\tif (count _aim > 1 && {surfaceIsWater _aim}) then {_aim = _dz};\n\t\t\t\t_k = _k + 1;\n\t\t\t\tif ([_u, _veh, _op get \"chute\", _aim] call VIOC_fnc_soJump) then {_jumped = _jumped + 1};"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "private _r = [_player, _side, _uid, _want, _town, _mode, _helper, _base, _pkgs, _join, _size, _seen, _cap, _jump] call VIOC_fnc_soPreqLaunch;",
+   "text": "private _r = [_player, _side, _uid, _want, _town, _mode, _helper, _base, _pkgs, _join, _size, _seen, _cap, _jump, _pos] call VIOC_fnc_soPreqLaunch;\t//--- VIOC para_dz: + el punto marcado"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "params [\"_player\", \"_side\", \"_uid\", \"_want\", \"_town\", \"_mode\", \"_helper\", \"_base\", \"_pkgs\", \"_join\", \"_size\", \"_seen\", \"_cap\", [\"_jump\", false]];",
+   "text": "params [\"_player\", \"_side\", \"_uid\", \"_want\", \"_town\", \"_mode\", \"_helper\", \"_base\", \"_pkgs\", \"_join\", \"_size\", \"_seen\", \"_cap\", [\"_jump\", false], [\"_at\", []]];\t//--- VIOC para_dz: + punto marcado"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "insert_after",
+   "anchor": "\t_plan params [\"_pkg\", \"_type\", \"_main\", \"_dz\", \"_air\"];",
+   "text": "\n\t//--- VIOC para_dz: los paracaidistas pedidos saltan sobre el punto marcado (o la tierra mas cercana a menos de 300 m)\n\tif (_type == \"para\" && {count _at > 1}) then {\n\t\tprivate _p = [_at] call VIOC_fnc_soDZAt;\n\t\tif (count _p > 0) then {_dz = _p};\n\t};"
+  }
+ ]
+}

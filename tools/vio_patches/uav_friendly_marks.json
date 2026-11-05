@@ -1,0 +1,28 @@
+{
+ "name": "uav_friendly_marks",
+ "description": "Drones aliados (de tu bando o de un bando amigo: IA, FPV, pedidos) en el mapa y el GPS ('Dron aliado') y, por defecto, con un icono en pantalla hasta 2 km, para no derribarlos por error.",
+ "purpose_es": "Ver la cabecera de VIOC_uav_marks.sqf.",
+ "source": "Escrito para este proyecto (2026-11-04).",
+ "risks": "Sin probar en el juego. Solo marcadores e iconos locales.",
+ "test_in_game_es": "Con drones FPV de tu bando en el aire: marcador 'Dron aliado' en el mapa e icono azul en pantalla; los enemigos no.",
+ "steps": [
+  {
+   "file": "VIOC_uav_marks.sqf",
+   "action": "new_file",
+   "anchor": "",
+   "text": "/*\n\tVIOC_uav_marks.sqf - agregado por tools/vio_build.py (parche uav_friendly_marks; copia configurada, no es del autor de\n\tla mision). Solo cliente (init.sqf lo lanza con execVM en las maquinas con jugador).\n\n\tDrones aliados a la vista (para no derribarlos por error): cada segundo, todos los drones vivos (allUnitsUAV: los de la\n\tIA, los FPV de ArmaFPV y Drone Warfare, los pedidos con PEDIR: Dron, los de tu bando...) de tu bando o de un bando\n\tamigo tienen un marcador local en el mapa y el GPS (\"Dron aliado\", icono NATO de dron con el color del bando) y, con\n\tVIOC_UAV_FRIENDLY_MARKS = 2, un icono en pantalla con el texto \"Dron aliado\" hasta VIOC_UM_RANGE3D m. Los enemigos\n\tno se marcan. Un dron sin tripulacion IA (apagado o recien armado) no tiene bando y tampoco se marca.\n\tParametro VIOC_UAV_FRIENDLY_MARKS (0 no, 1 solo mapa, 2 mapa e icono en pantalla).\n\tConsola (LOCAL EXEC): VIOC_UM_LIST   drones marcados [dron, marcador]\n*/\nif (!hasInterface) exitWith {};\nif (!isNil \"VIOC_UM_RUNNING\") exitWith {};\nVIOC_UM_RUNNING = true;\nVIOC_UM_MODE = missionNamespace getVariable [\"VIOC_UAV_FRIENDLY_MARKS\", 2];\nif !(VIOC_UM_MODE isEqualType 0) then {VIOC_UM_MODE = 2};\nif (VIOC_UM_MODE <= 0) exitWith {};\n\nVIOC_UM_RANGE3D = 2000;\nVIOC_UM_LIST = [];\nVIOC_UM_3D = [];\nVIOC_UM_N = 0;\n\n//--- [bando] -> [tipo de marcador, color del marcador, color del icono en pantalla]\nVIOC_UM_fnc_style = {\n\tparams [\"_s\"];\n\tswitch (_s) do {\n\t\tcase west: {[\"b_uav\", \"ColorWEST\", [0.3, 0.6, 1, 0.9]]};\n\t\tcase east: {[\"o_uav\", \"ColorEAST\", [1, 0.35, 0.35, 0.9]]};\n\t\tcase resistance: {[\"n_uav\", \"ColorGUER\", [0.35, 0.85, 0.35, 0.9]]};\n\t\tdefault {[\"n_uav\", \"ColorUNKNOWN\", [0.8, 0.8, 0.8, 0.9]]};\n\t};\n};\n\nVIOC_UM_fnc_friendly = {\n\tparams [\"_u\"];\n\tprivate _s = side _u;\n\tif !(_s in [west, east, resistance]) exitWith {false};\n\tprivate _me = side group player;\n\t(_s isEqualTo _me) || {(_me getFriend _s) >= 0.6}\n};\n\nif (VIOC_UM_MODE >= 2) then {\n\taddMissionEventHandler [\"Draw3D\", {\n\t\tif (count VIOC_UM_3D == 0) exitWith {};\n\t\tprivate _cam = positionCameraToWorld [0, 0, 0];\n\t\t{\n\t\t\t_x params [\"_u\", \"_ico\", \"_col\"];\n\t\t\tif (alive _u) then {\n\t\t\t\tprivate _p = ASLToAGL (getPosASLVisual _u);\n\t\t\t\tprivate _d = _cam distance _p;\n\t\t\t\tif (_d < VIOC_UM_RANGE3D && {_d > 20}) then {\n\t\t\t\t\tdrawIcon3D [_ico, _col, _p vectorAdd [0, 0, 1], 0.8, 0.8, 0, \"Dron aliado\", 2, 0.032, \"PuristaMedium\", \"center\", false];\n\t\t\t\t};\n\t\t\t};\n\t\t} forEach VIOC_UM_3D;\n\t}];\n};\n\n[] spawn {\n\twaitUntil {sleep 1; !isNull player};\n\twhile {true} do {\n\t\tprivate _now = if (alive player) then {allUnitsUAV select {alive _x && {[_x] call VIOC_UM_fnc_friendly}}} else {[]};\n\t\tVIOC_UM_LIST = VIOC_UM_LIST select {\n\t\t\tprivate _keep = (!isNull (_x select 0)) && {(_x select 0) in _now};\n\t\t\tif (!_keep) then {deleteMarkerLocal (_x select 1)};\n\t\t\t_keep\n\t\t};\n\t\tprivate _d3 = [];\n\t\t{\n\t\t\tprivate _u = _x;\n\t\t\tprivate _st = [side _u] call VIOC_UM_fnc_style;\n\t\t\tprivate _i = VIOC_UM_LIST findIf {(_x select 0) isEqualTo _u};\n\t\t\tif (_i < 0) then {\n\t\t\t\tVIOC_UM_N = VIOC_UM_N + 1;\n\t\t\t\tprivate _mk = createMarkerLocal [format [\"vioc_um_%1\", VIOC_UM_N], getPosATL _u];\n\t\t\t\t_mk setMarkerTypeLocal (_st select 0);\n\t\t\t\t_mk setMarkerColorLocal (_st select 1);\n\t\t\t\t_mk setMarkerSizeLocal [0.7, 0.7];\n\t\t\t\t_mk setMarkerTextLocal \"Dron aliado\";\n\t\t\t\tVIOC_UM_LIST pushBack [_u, _mk];\n\t\t\t} else {\n\t\t\t\t((VIOC_UM_LIST select _i) select 1) setMarkerPosLocal (getPosATL _u);\n\t\t\t};\n\t\t\t_d3 pushBack [_u, getText (configFile >> \"CfgMarkers\" >> (_st select 0) >> \"icon\"), _st select 2];\n\t\t} forEach _now;\n\t\tVIOC_UM_3D = _d3;\n\t\tsleep 1;\n\t};\n};\n"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "insert_before",
+   "anchor": "\tclass VIOC_PARA_JOIN {",
+   "text": "\tclass VIOC_UAV_FRIENDLY_MARKS {\n\t\ttitle = \"VIOC: Drones aliados en el mapa (y con icono en pantalla, para no derribarlos)\";\n\t\tvalues[] = {0,1,2};\n\t\ttexts[] = {\"No\",\"Solo en el mapa\",\"Mapa e icono en pantalla (hasta 2 km)\"};\n\t\tdefault = 2;\n\t};\n"
+  },
+  {
+   "file": "init.sqf",
+   "action": "append",
+   "anchor": "",
+   "text": "\n//--- VIOC: drones aliados en el mapa y en pantalla (parametro VIOC_UAV_FRIENDLY_MARKS; solo cliente; ver VIOC_uav_marks.sqf)\nif (hasInterface) then {[] execVM \"VIOC_uav_marks.sqf\"};\n"
+  }
+ ]
+}
