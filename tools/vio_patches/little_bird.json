@@ -1,0 +1,172 @@
+{
+ "name": "little_bird",
+ "description": "Operaciones especiales a pedido: tipo Little Bird (un MH-6 aterriza con 4 de fuerzas especiales en los bancos, bajan y se va).",
+ "purpose_es": "En el panel PEDIR: Operacion especial, el tipo Little Bird: un MH-6 (EE. UU.; Colombia usa el de EE. UU.) llega con 4 de fuerzas especiales en los bancos, aterriza, bajan y se va. Solo a pedido de un jugador; la IA no lo usa.",
+ "source": "work/v6_build/little_bird/",
+ "risks": "Toca dinero (precio = (4 + 1) x soldado; mismo cobro y devolucion que el helicoptero) y crea IA. Los bancos del MH-6 son puestos de tirador: se sube con moveInAny.",
+ "test_in_game_es": "Panel PEDIR: Operacion especial, tipo Little Bird, clic en un pueblo enemigo y CONFIRMAR.",
+ "steps": [
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t    * \"raid\":  solo de noche: un equipo de 6-7 sale a pie de un pueblo propio cercano (o de la base).\n\t  Despues el equipo ataca y captura el pueblo (MOVE + SAD + MOVE al centro, en bucle). A veces (40 %) refuerza\n",
+   "text": "\t    * \"raid\":  solo de noche: un equipo de 6-7 sale a pie de un pueblo propio cercano (o de la base).\n\t    * \"lb\":    VIOC little_bird: un Little Bird (MH-6; Rusia: Ka-60) aterriza con 4 de fuerzas especiales, bajan y se\n\t               va (EE. UU., Colombia y Rusia). Lo piden los jugadores y tambien la IA.\n\t  Despues el equipo ataca y captura el pueblo (MOVE + SAD + MOVE al centro, en bucle). A veces (40 %) refuerza\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\n//--- Bandos (oeste/este) que tuvieron algun jugador humano en la partida (muerto o reapareciendo sigue contando).\n",
+   "text": "\n//--- VIOC little_bird: \"Insercion en Little Bird\" (jugadores e IA): un MH-6 lleva VIOC_SO_LB_SIZE (4) de fuerzas\n//--- especiales en los bancos (puestos de tirador, no \"Cargo\"), aterriza, bajan y se va (VIOC_fnc_soDoHeli). Lo tienen los\n//--- paquetes con \"heli\" de las naciones con Little Bird (EE. UU. y Colombia, que usa el de EE. UU.; Rusia: Ka-60).\n//--- La IA tambien lo usa en sus operaciones (peso VIOC_SO_LB_W), con el mismo precio y 4 soldados.\nVIOC_SO_LB_W = 0.7;\nVIOC_SO_LB_SIZE = 4;\nVIOC_SO_LB_CLS = createHashMapFromArray [\n\t[\"US\", [\"RHS_MELB_MH6M\", \"CUP_B_MH6M_USA\", \"CUP_B_MH6J_USA\", \"B_Heli_Light_01_F\"]],\n\t[\"COL\", [\"RHS_MELB_MH6M\", \"CUP_B_MH6M_USA\", \"AOA_littlebird_M\", \"B_Heli_Light_01_F\"]],\n\t[\"RU\", [\"rhs_ka60_grey\", \"CUP_O_Ka60_Grey_RU\", \"O_Heli_Light_02_unarmed_F\"]],\t//--- Rusia no tiene MH-6: Ka-60 Kasatka, su helicoptero ligero\n\t[\"VANW\", [\"B_Heli_Light_01_F\"]]\n];\nVIOC_SO_TYPENAMES set [\"lb\", \"Insercion en Little Bird\"];\n{\n\tprivate _c = ((VIOC_SO_LB_CLS getOrDefault [_x get \"nation\", []]) select {\n\t\tisClass (configFile >> \"CfgVehicles\" >> _x) && {getNumber (configFile >> \"CfgVehicles\" >> _x >> \"scope\") >= 1} && {_x isKindOf \"Helicopter\"}\n\t}) param [0, \"\"];\n\t_x set [\"vlb\", if (\"heli\" in (_x get \"types\")) then {_c} else {\"\"}];\n} forEach VIOC_SO_PACKAGES;\n\n//--- Bandos (oeste/este) que tuvieron algun jugador humano en la partida (muerto o reapareciendo sigue contando).\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _extra = switch (_type) do {case \"para\": {3}; case \"heli\": {2}; default {0}};\n",
+   "text": "\tprivate _extra = switch (_type) do {case \"para\": {3}; case \"heli\": {2}; case \"lb\": {1}; default {0}};\t//--- VIOC little_bird: + 1 el Little Bird\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _n = (_op get \"size\") min ((_veh emptyPositions \"Cargo\") - (count (_op getOrDefault [\"pj\", []])));\t//--- VIOC heli_join: asiento para el jugador\n",
+   "text": "\tprivate _lbo = (_op get \"type\") == \"lb\";\t//--- VIOC little_bird: los bancos del MH-6 son puestos de tirador (FFV), no \"Cargo\"\n\tprivate _ffv = if (_lbo) then {(fullCrew [_veh, \"turret\", true]) select {isNull (_x select 0) && {(_x param [4, false]) isEqualTo true}}} else {[]};\n\tprivate _free = (_veh emptyPositions \"Cargo\") + (count _ffv);\n\tprivate _n = (_op get \"size\") min (_free - (count (_op getOrDefault [\"pj\", []])));\t//--- VIOC heli_join: asiento para el jugador\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif (_n < 4) exitWith {\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t\tdeleteGroup _team;\n\t\t[grpNull, [], \"noseat\", objNull]\n\t};\n\t{\n\t\tprivate _u = [_team, _x, _start, _pkg] call VIOC_fnc_soNewUnit;\n\t\tif (!isNull _u) then {\n\t\t\t_u moveInCargo _veh;\n\t\t\tif (vehicle _u != _veh) then {deleteVehicle _u};\n\t\t};\n\t} forEach ([_pkg, _n] call VIOC_fnc_soPickClasses);\n\tif (count (units _team) == 0) exitWith {\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t\t[grpNull, [], \"nounits\", objNull]\n\t};\n\t_op set [\"boarded\", {vehicle _x == _veh} count (units _team)];\n\t_team setBehaviour \"CARELESS\";\n",
+   "text": "\tif (_n < 4) exitWith {\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t\tdeleteGroup _team;\n\t\t[grpNull, [], \"noseat\", objNull]\n\t};\n\t{\n\t\tprivate _u = [_team, _x, _start, _pkg] call VIOC_fnc_soNewUnit;\n\t\tif (!isNull _u) then {\n\t\t\t_u moveInCargo _veh;\n\t\t\tif (_lbo && {vehicle _u != _veh} && {count _ffv > 0}) then {_u moveInTurret [_veh, (_ffv deleteAt 0) select 3]};\t//--- VIOC little_bird: a los bancos\n\t\t\tif (vehicle _u != _veh) then {deleteVehicle _u};\n\t\t};\n\t} forEach ([_pkg, _n] call VIOC_fnc_soPickClasses);\n\tif (count (units _team) == 0) exitWith {\n\t\t{deleteVehicle _x} forEach (crew _veh);\n\t\tdeleteVehicle _veh;\n\t\t[grpNull, [], \"nounits\", objNull]\n\t};\n\t_op set [\"boarded\", {vehicle _x == _veh} count (units _team)];\n\t_team setBehaviour \"CARELESS\";\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\tcase \"heli\": {[_op] call VIOC_fnc_soDoHeli};\n\t\tdefault {[_op] call VIOC_fnc_soDoRaid};\n",
+   "text": "\t\tcase \"heli\": {[_op] call VIOC_fnc_soDoHeli};\n\t\tcase \"lb\": {[_op] call VIOC_fnc_soDoHeli};\t//--- VIOC little_bird\n\t\tdefault {[_op] call VIOC_fnc_soDoRaid};\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t\t\t\tcase \"raid\": {_night && {_mode == \"attack\"}};\n\t\t\t\t\tdefault {false};\n",
+   "text": "\t\t\t\t\tcase \"raid\": {_night && {_mode == \"attack\"}};\n\t\t\t\t\tcase \"lb\": {true};\t//--- VIOC little_bird\n\t\t\t\t\tdefault {false};\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t\t\t\t_opts pushBack [_p, _ty, _w * (if (_ty == \"raid\") then {1.3} else {1}), _main];\n",
+   "text": "\t\t\t\t\t_opts pushBack [_p, _ty, _w * (if (_ty == \"raid\") then {1.3} else {if (_ty == \"lb\") then {VIOC_SO_LB_W} else {1}}), _main];\t//--- VIOC little_bird: peso\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t\t} forEach (_p get \"types\");\n",
+   "text": "\t\t\t} forEach ((_p get \"types\") + (if ((_want in [\"\", \"lb\"]) && {(_p getOrDefault [\"vlb\", \"\"]) != \"\"}) then {[\"lb\"]} else {[]}));\t//--- VIOC little_bird: si se pide o lo elige la IA (\"\")\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t\t\tcase \"heli\": {[_town, _from, _side, _mode] call VIOC_fnc_soFindLZ};\n\t\t\tdefault {[_town, _side, selectRandom ((_o select 0) get \"vunits\")] call VIOC_fnc_soFindRaidStart};\n",
+   "text": "\t\t\tcase \"heli\": {[_town, _from, _side, _mode] call VIOC_fnc_soFindLZ};\n\t\t\tcase \"lb\": {[_town, _from, _side, _mode] call VIOC_fnc_soFindLZ};\t//--- VIOC little_bird\n\t\t\tdefault {[_town, _side, selectRandom ((_o select 0) get \"vunits\")] call VIOC_fnc_soFindRaidStart};\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif (_type == \"heli\") then {_air = selectRandom (_pkg get \"vhelis\")};\n\t[_pkg, _type, _main, _pos, _air]\n",
+   "text": "\tif (_type == \"heli\") then {_air = selectRandom (_pkg get \"vhelis\")};\n\tif (_type == \"lb\") then {_air = _pkg getOrDefault [\"vlb\", \"\"]};\t//--- VIOC little_bird\n\t[_pkg, _type, _main, _pos, _air]\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _size = switch (_type) do {case \"para\": {8 + floor random 3}; case \"heli\": {6 + floor random 3}; default {6 + floor random 2}};\n",
+   "text": "\tprivate _size = switch (_type) do {case \"para\": {8 + floor random 3}; case \"heli\": {6 + floor random 3}; case \"lb\": {VIOC_SO_LB_SIZE}; default {6 + floor random 2}};\t//--- VIOC little_bird: 4\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif !(_want in [\"any\", \"para\", \"heli\", \"raid\"]) then {_want = \"any\"};\n",
+   "text": "\tif !(_want in [\"any\", \"para\", \"heli\", \"raid\", \"lb\"]) then {_want = \"any\"};\t//--- VIOC little_bird: + \"lb\"\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t_size = ((2 * round (_size / 2)) max 4) min 8;\n\tif ((count _pos) < 2 || {!((_pos select 0) isEqualType 0)} || {!((_pos select 1) isEqualType 0)}) exitWith {\"posicion no valida\"};\n",
+   "text": "\t_size = ((2 * round (_size / 2)) max 4) min 8;\n\tif (_want == \"lb\") then {_size = VIOC_SO_LB_SIZE};\t//--- VIOC little_bird: caben 4 en los bancos\n\tif ((count _pos) < 2 || {!((_pos select 0) isEqualType 0)} || {!((_pos select 1) isEqualType 0)}) exitWith {\"posicion no valida\"};\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif (count _pkgs == 0) exitWith {\"tu bando no tiene unidades especiales en este escenario\"};\n\t//--- topes: soldados pedidos vivos del bando y presupuesto de IA\n",
+   "text": "\tif (count _pkgs == 0) exitWith {\"tu bando no tiene unidades especiales en este escenario\"};\n\tif (_want == \"lb\" && {(_pkgs findIf {((_x select 0) getOrDefault [\"vlb\", \"\"]) != \"\"}) < 0}) exitWith {\"tu bando no tiene Little Bird (MH-6) en este escenario\"};\t//--- VIOC little_bird\n\t//--- topes: soldados pedidos vivos del bando y presupuesto de IA\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tpublicVariable \"VIOC_SO_PREQ_AVAIL\";\n\tformat [\"pedidos de jugadores: modo %1 (precio x%2, enfriamiento %3 min), oeste/este con paquetes %4\", VIOC_SO_PREQ_MODE, VIOC_SO_PREQ_MULT, VIOC_SO_PREQ_COOLDOWN / 60, VIOC_SO_PREQ_AVAIL] call VIOC_fnc_soLog;\n",
+   "text": "\tpublicVariable \"VIOC_SO_PREQ_AVAIL\";\n\tVIOC_SO_LB_AVAIL = [west, east] apply {\t//--- VIOC little_bird: nombre del Little Bird del bando (\"\" = no tiene)\n\t\tprivate _s = _x;\n\t\tprivate _ps = ([_s] call VIOC_fnc_soSidePackages) select {((_x select 0) getOrDefault [\"vlb\", \"\"]) != \"\"};\n\t\tif ((VIOC_SO_PREQ_MODE > 0) && {count _ps > 0}) then {getText (configFile >> \"CfgVehicles\" >> (((_ps select 0) select 0) get \"vlb\") >> \"displayName\")} else {\"\"}\n\t};\n\tpublicVariable \"VIOC_SO_LB_AVAIL\";\n\tformat [\"pedidos de jugadores: modo %1 (precio x%2, enfriamiento %3 min), oeste/este con paquetes %4\", VIOC_SO_PREQ_MODE, VIOC_SO_PREQ_MULT, VIOC_SO_PREQ_COOLDOWN / 60, VIOC_SO_PREQ_AVAIL] call VIOC_fnc_soLog;\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\t[_veh, _op get \"pjlo\", _op getOrDefault [\"pjchute\", [\"B_Parachute\", \"Steerable_Parachute_F\"]], (_op get \"pkg\") get \"name\", (_op getOrDefault [\"type\", \"\"]) == \"heli\"] remoteExecCall [\"VIOC_PJ_fnc_board\", _p];\t//--- VIOC heli_join: + en helicoptero\n",
+   "text": "\t[_veh, _op get \"pjlo\", _op getOrDefault [\"pjchute\", [\"B_Parachute\", \"Steerable_Parachute_F\"]], (_op get \"pkg\") get \"name\", (_op getOrDefault [\"type\", \"\"]) in [\"heli\", \"lb\"]] remoteExecCall [\"VIOC_PJ_fnc_board\", _p];\t//--- VIOC heli_join: + en helicoptero (VIOC little_bird: + \"lb\")\n"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "\tif ((_op getOrDefault [\"preq\", \"\"]) isEqualTo \"\" && {VIOC_PJ_MODE >= 2} && {(_op getOrDefault [\"type\", \"\"]) != \"heli\"}) then {\t//--- VIOC heli_join: la oferta de la IA sigue siendo solo de saltos\n",
+   "text": "\tif ((_op getOrDefault [\"preq\", \"\"]) isEqualTo \"\" && {VIOC_PJ_MODE >= 2} && {!((_op getOrDefault [\"type\", \"\"]) in [\"heli\", \"lb\"])}) then {\t//--- VIOC heli_join: la oferta de la IA sigue siendo solo de saltos (VIOC little_bird: tampoco el Little Bird)\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\t  - Esc / M / CANCELAR cierra sin pedir nada.\n\t  - VIOC para_join: \"Saltar con ellos (yo tambien)\" (solo paracaidistas; parametro VIOC_PARA_JOIN): subes al avion con\n",
+   "text": "\t  - Esc / M / CANCELAR cierra sin pedir nada.\n\t  - VIOC little_bird: tipo \"Little Bird\": un MH-6 aterriza con 4 de fuerzas especiales en los bancos, bajan y se va\n\t    (Rusia: Ka-60; solo si tu bando lo tiene: VIOC_SO_LB_AVAIL = nombre por bando).\n\t  - VIOC para_join: \"Saltar con ellos (yo tambien)\" (solo paracaidistas; parametro VIOC_PARA_JOIN): subes al avion con\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "VIOC_SOR_TYPES = [[\"any\", \"Cualquiera\"], [\"para\", \"Paracaidistas\"], [\"heli\", \"Helicoptero\"], [\"raid\", \"A pie (noche)\"]];\n",
+   "text": "VIOC_SOR_TYPES = [[\"any\", \"Cualquiera\"], [\"para\", \"Paracaidistas\"], [\"heli\", \"Helicoptero\"], [\"raid\", \"A pie (noche)\"], [\"lb\", \"Little Bird\"]];\t//--- VIOC little_bird: + \"lb\"\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\t_i >= 0 && {((missionNamespace getVariable [\"VIOC_SO_PREQ_AVAIL\", []]) param [_i, false]) isEqualTo true}\n};\n",
+   "text": "\t_i >= 0 && {((missionNamespace getVariable [\"VIOC_SO_PREQ_AVAIL\", []]) param [_i, false]) isEqualTo true}\n};\n\n//--- VIOC little_bird: tu bando tiene Little Bird (lo publica el servidor).\nVIOC_SOR_fnc_lbOk = {\n\tprivate _i = [west, east] find CTI_P_SideJoined;\n\tprivate _n = if (_i >= 0) then {(missionNamespace getVariable [\"VIOC_SO_LB_AVAIL\", []]) param [_i, \"\"]} else {\"\"};\n\t(_n isEqualType \"\") && {_n != \"\"}\n};\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _extra = switch (_type) do {case \"heli\": {2}; case \"raid\": {0}; default {3}};\n",
+   "text": "\tprivate _extra = switch (_type) do {case \"heli\": {2}; case \"lb\": {1}; case \"raid\": {0}; default {3}};\t//--- VIOC little_bird\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _n = VIOC_SOR_SIZES select _si;\n\t([VIOC_SOR_POS] call VIOC_SOR_fnc_target) params [\"\", \"_what\", \"_prob\"];\n",
+   "text": "\tprivate _n = VIOC_SOR_SIZES select _si;\n\tif (_type == \"lb\") then {_n = 4};\t//--- VIOC little_bird: 4 en los bancos\n\t([VIOC_SOR_POS] call VIOC_SOR_fnc_target) params [\"\", \"_what\", \"_prob\"];\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\tif (_type == \"raid\") then {_l pushBack \"<t color='#aaaaaa'>A pie: salen de un pueblo tuyo a menos de 2,5 km del objetivo.</t>\"};\n\t_info ctrlSetStructuredText parseText format [\"<t size='0.85'>%1</t>\", _l joinString \"<br/>\"];\n",
+   "text": "\tif (_type == \"raid\") then {_l pushBack \"<t color='#aaaaaa'>A pie: salen de un pueblo tuyo a menos de 2,5 km del objetivo.</t>\"};\n\tif (_type == \"lb\") then {_l pushBack (if (call VIOC_SOR_fnc_lbOk) then {format [\"<t color='#aaaaaa'>Little Bird (%1): siempre 4 de fuerzas especiales; aterriza, bajan y se va.</t>\", [(missionNamespace getVariable [\"VIOC_SO_LB_AVAIL\", []]) param [[west, east] find CTI_P_SideJoined, \"\"]] call VIOC_SOR_fnc_esc]} else {\"<t color='#F56363'>Tu bando no tiene Little Bird en este escenario.</t>\"})};\t//--- VIOC little_bird\n\t_info ctrlSetStructuredText parseText format [\"<t size='0.85'>%1</t>\", _l joinString \"<br/>\"];\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _n = VIOC_SOR_SIZES select _si;\n\tprivate _seen = [_type, _n] call VIOC_SOR_fnc_price;\n",
+   "text": "\tprivate _n = VIOC_SOR_SIZES select _si;\n\tif (_type == \"lb\") then {_n = 4};\t//--- VIOC little_bird\n\tif (_type == \"lb\" && {!(call VIOC_SOR_fnc_lbOk)}) exitWith {hint \"Tu bando no tiene Little Bird en este escenario: elige otro tipo.\"};\n\tprivate _seen = [_type, _n] call VIOC_SOR_fnc_price;\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\t_y = _y + 2 * (_lh + _p * 0.6) + _p * 0.4;\n",
+   "text": "\t(_tb select 4) ctrlSetTooltip \"Un Little Bird (MH-6) aterriza con 4 de fuerzas especiales en los bancos, bajan y se va\";\t//--- VIOC little_bird\n\t_y = _y + (ceil ((count VIOC_SOR_TYPES) / 2)) * (_lh + _p * 0.6) + _p * 0.4;\t//--- VIOC little_bird: 3 filas\n"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "\t_bg ctrlSetPosition [_x0, _y0, _w, _H * 0.65];\n",
+   "text": "\t_bg ctrlSetPosition [_x0, _y0, _w, _H * 0.65 + _lh + _p * 0.6];\t//--- VIOC little_bird: + una fila de tipos\n"
+  }
+ ]
+}

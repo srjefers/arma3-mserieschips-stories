@@ -1,0 +1,334 @@
+{
+ "name": "heli_attack",
+ "description": "Apoyo aereo v3: boton HELICOPTEROS en el panel PEDIR: Apoyo aereo (3 helicopteros de ataque atacan la zona marcada unos minutos y se van).",
+ "purpose_es": "Pedir 3 helicopteros de ataque del bando (AH-64D; Rusia Mi-28N/Ka-52/Mi-24) que atacan 5 min a los enemigos alrededor del punto marcado, infanteria primero, y se van. Se les puede derribar; si caen los 3 la espera es mas larga.",
+ "source": "work/v6_build/heli_attack/",
+ "risks": "Toca dinero (cobro y devolucion reusan VIOC_AS_fnc_requestDo) y crea IA (3 helicopteros, presupuesto VIOC_PERF_AI_MAX). La IA elige sus blancos: puede haber fuego cerca de tropas propias.",
+ "test_in_game_es": "Consola (Ejecucion local): [\"heli\", screenToWorld [0.5,0.5]] call VIOC_AS_fnc_force; luego hint (call VIOC_AS_fnc_status);",
+ "steps": [
+  {
+   "file": "VIOC_heli_attack.sqf",
+   "action": "new_file",
+   "anchor": "",
+   "text": "/*\n\tVIOC_heli_attack.sqf - agregado por tools/vio_build.py (parche heli_attack; no es del autor de la mision).\n\tFuente: work/v6_build/heli_attack/.\n\n\tServidor de HELICOPTEROS, el tercer tipo del panel \"PEDIR: Apoyo aereo\" (tipo \"heli\"; el pedido lo valida y lo cobra\n\tVIOC_AS_fnc_requestDo en VIOC_air_support_server.sqf y luego llama a VIOC_HA_fnc_launch):\n\t  - VIOC_ASS_HA_N (3) helicopteros de ataque del bando (VIOC_ASS_CLASS select 2: AH-64D Apache; Rusia Mi-28N, Ka-52 o\n\t    Mi-24) aparecen a VIOC_HA_SPAWN m del blanco, del lado de lo propio, y vuelan juntos hacia el punto marcado sin\n\t    distraerse (CARELESS).\n\t  - Cuando el primero llega (a menos de VIOC_HA_NEAR m), todos pasan a combate (COMBAT / RED) con una orden de\n\t    buscar y destruir (SAD) alrededor del blanco, a VIOC_HA_FLY m de altura, durante VIOC_ASS_HA_LIFE s (lobby\n\t    VIOC_HELI_DURATION, 5 min). Cada 5 s se les revelan los enemigos a menos de VIOC_ASS_HA_ZONE m (300) del blanco\n\t    (infanteria primero; no los que estan a menos de 30 m de tropas propias) y el artillero apunta al grupo de\n\t    infanteria mas denso (3 o mas hombres en 25 m). El que se aleja mas de VIOC_HA_NEAR + 300 m vuelve.\n\t  - El que queda muy danado (> 0,6) o sin municion se va antes. Al terminar se van todos a base y se borran cuando no\n\t    hay jugadores cerca (VIOC_AS_fnc_planeGone). Se les puede derribar.\n\t  - Espera del bando: VIOC_ASS_HA_CD (lobby VIOC_HELI_COOLDOWN); si caen TODOS, VIOC_ASS_HA_CD_LOST (lobby\n\t    VIOC_HELI_LOST_COOLDOWN). Si ninguno llega en VIOC_HA_ARRIVE_T s, se cancela y se devuelve el dinero.\n\t  - Bajas: cuenta los enemigos a pie que matan (EntityKilled) y las dice al final.\n\tSolo servidor (lo carga VIOC_air_support_server.sqf).\n\tConsola (servidor; en partida alojada vale \"Ejecucion local\"):\n\t    [\"heli\", screenToWorld [0.5,0.5]] call VIOC_AS_fnc_force;   helicopteros gratis donde miras\n\t    [west] call VIOC_HA_fnc_end;                                  los helicopteros de ese bando se van ya\n\t    hint (call VIOC_AS_fnc_status);                              estado del apoyo aereo (con los helicopteros)\n*/\nif (!isServer) exitWith {};\nif (!isNil \"VIOC_HA_STARTED\") exitWith {};\nVIOC_HA_STARTED = true;\n\nVIOC_HA_SPAWN = 3500;\t\t//--- m del blanco donde aparecen\nVIOC_HA_ALT = 150;\t\t\t//--- m de altura al llegar y al irse\nVIOC_HA_FLY = 70;\t\t\t//--- m de altura durante el ataque\nVIOC_HA_NEAR = 900;\t\t\t//--- m: \"llego\" (y correa: a mas de esto + 300 m vuelve)\nVIOC_HA_ARRIVE_T = 240;\t\t//--- s maximos para que llegue el primero (si no, se cancela y se devuelve el dinero)\nVIOC_HA_SAFE = 30;\t\t\t//--- m: no se les revelan enemigos tan cerca de tropas propias\nVIOC_HA_KILLS = createHashMap;\t//--- id del pedido -> enemigos a pie muertos por sus helicopteros\n\n//--- Bajas: el que mato (o el que disparo) va en un helicoptero de un pedido y el muerto era enemigo de ese bando.\naddMissionEventHandler [\"EntityKilled\", {\n\tparams [\"_u\", \"_k\", \"_i\"];\n\tif (!(_u isKindOf \"CAManBase\")) exitWith {};\n\tprivate _src = if (isNull _i) then {_k} else {_i};\n\tif (isNull _src) exitWith {};\n\tprivate _id = (vehicle _src) getVariable [\"vioc_ha_id\", -1];\n\tif (_id < 0) exitWith {};\n\tprivate _hs = (vehicle _src) getVariable [\"vioc_ha_side\", sideUnknown];\n\tprivate _us = side group _u;\n\tif (!(_us in [west, east, resistance]) || {(_hs getFriend _us) >= 0.6}) exitWith {};\n\tVIOC_HA_KILLS set [_id, (VIOC_HA_KILLS getOrDefault [_id, 0]) + 1];\n}];\n\n//--- true si al helicoptero le queda municion de verdad (no cuentan bengalas ni el designador laser).\nVIOC_HA_fnc_hasAmmo = {\n\tparams [\"_h\"];\n\t((magazinesAllTurrets _h) findIf {\n\t\t((_x select 2) > 0) && {!((getText (configFile >> \"CfgAmmo\" >> (getText (configFile >> \"CfgMagazines\" >> (_x select 0) >> \"ammo\")) >> \"simulation\")) in [\"shotCM\", \"laserDesignate\"])}\n\t}) >= 0\n};\n\n//--- Fuera de combate: destruido, inmovil o sin piloto vivo.\nVIOC_HA_fnc_down = {\n\tparams [\"_h\"];\n\tisNull _h || {!alive _h} || {!canMove _h} || {isNull (driver _h)} || {!alive (driver _h)}\n};\n\n//--- Enemigos alrededor del blanco: [hombres a pie (por distancia), vehiculos con tripulacion].\nVIOC_HA_fnc_targets = {\n\tparams [\"_pos\", \"_side\"];\n\tprivate _men = [];\n\tprivate _veh = [];\n\t{\n\t\tif (alive _x) then {\n\t\t\tif (_x isKindOf \"CAManBase\") then {\n\t\t\t\tprivate _s = side group _x;\n\t\t\t\tif ((_s in [west, east, resistance]) && {(_side getFriend _s) < 0.6}) then {_men pushBack _x};\n\t\t\t} else {\n\t\t\t\tif (({alive _x} count (crew _x)) > 0) then {\n\t\t\t\t\tprivate _s = side _x;\n\t\t\t\t\tif ((_s in [west, east, resistance]) && {(_side getFriend _s) < 0.6}) then {_veh pushBack _x};\n\t\t\t\t};\n\t\t\t};\n\t\t};\n\t} forEach (_pos nearEntities [[\"CAManBase\", \"LandVehicle\", \"StaticWeapon\"], VIOC_ASS_HA_ZONE]);\n\t_men = [_men, [_pos], {_x distance2D _input0}, \"ASCEND\"] call BIS_fnc_sortBy;\n\tif (count _men > 24) then {_men resize 24};\n\t_men = _men select {!([getPosATL _x, _side, VIOC_HA_SAFE] call VIOC_AS_fnc_friendlyNear)};\n\t_veh = _veh select {!([getPosATL _x, _side, VIOC_HA_SAFE] call VIOC_AS_fnc_friendlyNear)};\n\t[_men, _veh]\n};\n\n//--- Orden de buscar y destruir alrededor del blanco.\nVIOC_HA_fnc_sad = {\n\tparams [\"_g\", \"_pos\", \"_k\"];\n\tprivate _p = _pos getPos [80 + random 70, _k * 120 + random 60];\n\tprivate _wp = _g addWaypoint [_p, 0];\n\t_wp setWaypointType \"SAD\";\n\t_wp setWaypointBehaviour \"COMBAT\";\n\t_wp setWaypointCombatMode \"RED\";\n\t_wp setWaypointSpeed \"NORMAL\";\n\t_g setCurrentWaypoint _wp;\n};\n\n//--- Un helicoptero se va a base y se borra cuando nadie lo ve (planeGone; si cae en el camino, restos al recolector).\nVIOC_HA_fnc_home = {\n\tparams [\"_h\", \"_g\", \"_pos\", \"_side\"];\n\tif (isNull _h || {!alive _h}) exitWith {};\n\tprivate _home = [_side, _pos] call VIOC_AS_fnc_home;\n\tprivate _hd = if ((count _home > 1) && {(_home distance2D _pos) > 50}) then {_pos getDir _home} else {_pos getDir _h};\n\tprivate _away = _pos getPos [7000, _hd];\n\t_g setBehaviour \"CARELESS\";\n\t_g setCombatMode \"BLUE\";\n\t_h flyInHeight VIOC_HA_ALT;\n\tprivate _wp = _g addWaypoint [_away, 0];\n\t_wp setWaypointType \"MOVE\";\n\t_wp setWaypointBehaviour \"CARELESS\";\n\t_wp setWaypointCombatMode \"BLUE\";\n\t_wp setWaypointSpeed \"FULL\";\n\t_g setCurrentWaypoint _wp;\n\t[_h, _g, _away, VIOC_ASS_GONE_T] spawn VIOC_AS_fnc_planeGone;\n};\n\n//--- Crea los helicopteros del pedido _e (ya cobrado y en VIOC_ASS_ACTIVE). Devuelve \"ok\" o el motivo (y devuelve el dinero).\nVIOC_HA_fnc_launch = {\n\tparams [\"_e\", \"_player\", \"_pos\"];\n\tprivate _side = _e get \"side\";\n\tprivate _cls = _e get \"cls\";\n\tprivate _price = _e get \"price\";\n\tprivate _id = _e get \"id\";\n\tprivate _home = [_side, _pos] call VIOC_AS_fnc_home;\n\tprivate _dir = if ((count _home > 1) && {(_home distance2D _pos) > 50}) then {_pos getDir _home} else {random 360};\n\tprivate _sp = _pos getPos [VIOC_HA_SPAWN, _dir];\n\t_sp = [((_sp select 0) max 300) min (worldSize - 300), ((_sp select 1) max 300) min (worldSize - 300), 0];\n\tprivate _hd = _sp getDir _pos;\n\tprivate _helis = [];\n\tprivate _grps = [];\n\tprivate _err = \"\";\n\tfor \"_i\" from 0 to (VIOC_ASS_HA_N - 1) do {\n\t\tprivate _p = _sp getPos [(_i - ((VIOC_ASS_HA_N - 1) / 2)) * 90, _hd + 90];\n\t\tprivate _r = [_side, _cls, [_p select 0, _p select 1, ((getTerrainHeightASL _p) max 0) + VIOC_HA_ALT], _hd, 40] call VIOC_AS_fnc_spawnPlane;\n\t\tif (_r isEqualType \"\") then {_err = _r} else {\n\t\t\t_r params [\"_h\", \"_g\"];\n\t\t\t_helis pushBack _h;\n\t\t\t_grps pushBack _g;\n\t\t};\n\t};\n\tif (count _helis == 0) exitWith {\n\t\tVIOC_ASS_ACTIVE = VIOC_ASS_ACTIVE select {(_x get \"id\") != _id};\n\t\t[_e, _price] call VIOC_AS_fnc_refund;\n\t\tformat [\"no se pudo crear ningun helicoptero: %1 (se te devolvieron los %2)\", _err, _price]\n\t};\n\t//--- revision: si salieron menos, se devuelve la parte de los que faltan (y el precio del pedido baja)\n\tprivate _back = 0;\n\tif (count _helis < VIOC_ASS_HA_N && {_price > 0} && {!(_e getOrDefault [\"free\", false])}) then {\n\t\t_back = round (_price * (VIOC_ASS_HA_N - count _helis) / VIOC_ASS_HA_N);\n\t\t[_e, _back] call VIOC_AS_fnc_refund;\n\t\t_price = _price - _back;\n\t\t_e set [\"price\", _price];\n\t};\n\t{\n\t\t_x setVariable [\"vioc_ha_id\", _id];\n\t\t_x setVariable [\"vioc_ha_side\", _side];\n\t\t_x setVariable [\"vioc_as_uid\", _e get \"uid\", true];\n\t\t_x setVariable [\"vioc_as_kind\", \"heli\", true];\n\t\t_x flyInHeight VIOC_HA_ALT;\n\t} forEach _helis;\n\t{\n\t\tprivate _wp = _x addWaypoint [_pos, 0];\n\t\t_wp setWaypointType \"MOVE\";\n\t\t_wp setWaypointBehaviour \"CARELESS\";\n\t\t_wp setWaypointCombatMode \"BLUE\";\n\t\t_wp setWaypointSpeed \"FULL\";\n\t\t_x setCurrentWaypoint _wp;\n\t} forEach _grps;\n\tVIOC_HA_KILLS set [_id, 0];\n\t_e set [\"plane\", _helis select 0];\n\t_e set [\"grp\", _grps select 0];\n\t_e set [\"helis\", _helis];\n\t_e set [\"grps\", _grps];\n\t_e set [\"center\", _pos];\n\t_e set [\"aim\", _pos];\n\t_e set [\"state\", \"fly\"];\n\tprivate _dn = getText (configFile >> \"CfgVehicles\" >> _cls >> \"displayName\");\n\tprivate _who = name _player;\n\t[_player, true, format [\"%1 helicopteros %2 en camino a la cuadricula %3: llegan en 1-2 min y atacan %4 min a los enemigos a menos de %5 m del punto (infanteria primero). Costo %6.%7\",\n\t\tcount _helis, _dn, mapGridPosition _pos, round (VIOC_ASS_HA_LIFE / 60), VIOC_ASS_HA_ZONE, _price, if (count _helis < VIOC_ASS_HA_N) then {format [\" (solo salieron %1 de %2: %3; se te devolvieron %4)\", count _helis, VIOC_ASS_HA_N, _err, _back]} else {\"\"}],\n\t\t[\"heli\", _helis select 0, _pos, VIOC_ASS_HA_ZONE]] call VIOC_AS_fnc_reply;\n\t[_side, format [\"%1 pidio un ataque de helicopteros (%2) sobre la cuadricula %3.\", _who, _dn, mapGridPosition _pos]] call VIOC_AS_fnc_sideSay;\n\tformat [\"Helicopteros de %1 (%2): %3 x %4 sobre %5, costo %6\", _who, _side, count _helis, _cls, mapGridPosition _pos, _price] call VIOC_AS_fnc_log;\n\t[_e] spawn VIOC_HA_fnc_run;\n\t\"ok\"\n};\n\n//--- Vigila el ataque hasta que termina; luego espera del bando, aviso y regreso.\nVIOC_HA_fnc_run = {\n\tparams [\"_e\"];\n\tprivate _helis = _e get \"helis\";\n\tprivate _grps = _e get \"grps\";\n\tprivate _side = _e get \"side\";\n\tprivate _uid = _e get \"uid\";\n\tprivate _pname = _e get \"pname\";\n\tprivate _pos = _e get \"center\";\n\tprivate _id = _e get \"id\";\n\tprivate _t0 = time;\n\tprivate _attack = false;\n\tprivate _end = 1e10;\n\tprivate _why = \"\";\n\tprivate _gone = [];\t\t//--- se fueron antes (danados o sin municion)\n\tprivate _down = [];\t\t//--- derribados (ya avisados al recolector)\n\tprivate _next = 0;\n\tprivate _nextAmmo = time + 20;\n\twhile {true} do {\n\t\tsleep 1;\n\t\t{\n\t\t\tif (!(_x in _down) && {!(_x in _gone)} && {[_x] call VIOC_HA_fnc_down}) then {\t//--- los que se fueron antes los lleva planeGone\n\t\t\t\t_down pushBack _x;\n\t\t\t\t//--- revision: entero pero inmovil o sin piloto -> se borra (con su gente) cuando no hay jugadores cerca (o a los 15 min)\n\t\t\t\tif (!isNull _x && {alive _x}) then {[_x, _grps select _forEachIndex, [-1e5, -1e5, 0], 900] spawn VIOC_AS_fnc_planeGone} else {\n\t\t\t\t\tif (!isNull _x) then {_x setVariable [\"VIOC_KEEP\", false, true]};\n\t\t\t\t\t[_grps select _forEachIndex] spawn VIOC_AS_fnc_crewCleanup;\n\t\t\t\t};\n\t\t\t};\n\t\t} forEach _helis;\n\t\tprivate _act = _helis select {!(_x in _gone) && {!(_x in _down)}};\n\t\tif (count _act > 0) then {_e set [\"plane\", _act select 0]; _e set [\"grp\", _grps select (_helis find (_act select 0))]};\n\t\tif ((count _down) == (count _helis)) exitWith {_why = \"lost\"};\n\t\tif (count _act == 0) exitWith {_why = \"gone\"};\n\t\tif (missionNamespace getVariable [\"CTI_GameOver\", false]) exitWith {_why = \"over\"};\n\t\tif (_e getOrDefault [\"end\", false]) exitWith {_why = \"forced\"};\n\t\tif (_attack && {time >= _end}) exitWith {_why = \"time\"};\n\t\tif (!_attack && {(time - _t0) > VIOC_HA_ARRIVE_T}) exitWith {_why = \"noarrive\"};\n\t\t{if ((fuel _x) < 0.3) then {_x setFuel 1}} forEach _act;\n\t\t//--- llegada: todos a combate\n\t\tif (!_attack && {(_act findIf {(_x distance2D _pos) < VIOC_HA_NEAR}) >= 0}) then {\n\t\t\t_attack = true;\n\t\t\t_end = time + VIOC_ASS_HA_LIFE;\n\t\t\t_e set [\"state\", \"attack\"];\n\t\t\t{\n\t\t\t\tprivate _g = _grps select (_helis find _x);\n\t\t\t\t_g setBehaviour \"COMBAT\";\n\t\t\t\t_g setCombatMode \"RED\";\n\t\t\t\t_x flyInHeight VIOC_HA_FLY;\n\t\t\t\t[_g, _pos, _forEachIndex] call VIOC_HA_fnc_sad;\n\t\t\t} forEach _act;\n\t\t\t[_uid, format [\"Helicopteros sobre la cuadricula %1: atacan durante %2 min.\", mapGridPosition _pos, round (VIOC_ASS_HA_LIFE / 60)]] call VIOC_AS_fnc_note;\n\t\t};\n\t\t//--- danados o sin municion: se van antes\n\t\tprivate _chkAmmo = time > _nextAmmo;\n\t\tif (_chkAmmo) then {_nextAmmo = time + 10};\n\t\t{\n\t\t\tif (((damage _x) > 0.6) || {_attack && {_chkAmmo} && {!([_x] call VIOC_HA_fnc_hasAmmo)}}) then {\n\t\t\t\t_gone pushBack _x;\n\t\t\t\t[_x, _grps select (_helis find _x), _pos, _side] call VIOC_HA_fnc_home;\n\t\t\t};\n\t\t} forEach _act;\n\t\t//--- cada 5 s: blancos revelados, artillero al grupo de infanteria mas denso, correa y nueva orden SAD\n\t\tif (_attack && {time > _next}) then {\n\t\t\t_next = time + 5;\n\t\t\t([_pos, _side] call VIOC_HA_fnc_targets) params [\"_men\", \"_veh\"];\n\t\t\tprivate _best = objNull;\n\t\t\tprivate _bn = 0;\n\t\t\t{\n\t\t\t\tprivate _u = _x;\n\t\t\t\tprivate _n = {(_x distance _u) < 25} count _men;\n\t\t\t\tif (_n > _bn) then {_bn = _n; _best = _u};\n\t\t\t} forEach _men;\n\t\t\t{\n\t\t\t\tprivate _h = _x;\n\t\t\t\tif !(_h in _gone) then {\n\t\t\t\t\tprivate _k = _helis find _h;\n\t\t\t\t\tprivate _g = _grps select _k;\n\t\t\t\t\t{_g reveal [_x, 4]} forEach (_men + _veh);\n\t\t\t\t\tprivate _gun = gunner _h;\n\t\t\t\t\tif (_bn >= 3 && {!isNull _gun} && {alive _gun} && {!isPlayer _gun}) then {_gun doTarget _best; _gun doFire _best};\n\t\t\t\t\tif (((_h distance2D _pos) > (VIOC_HA_NEAR + 300)) && {time > (_h getVariable [\"vioc_ha_leash\", 0])}) then {\n\t\t\t\t\t\t_h setVariable [\"vioc_ha_leash\", time + 20];\n\t\t\t\t\t\t[_g, _pos, _k] call VIOC_HA_fnc_sad;\n\t\t\t\t\t} else {\n\t\t\t\t\t\tif ((currentWaypoint _g) >= (count (waypoints _g))) then {[_g, _pos, _k] call VIOC_HA_fnc_sad};\n\t\t\t\t\t};\n\t\t\t\t};\n\t\t\t} forEach (_act select {!(_x in _gone)});\n\t\t};\n\t};\n\t//--- fin\n\tprivate _kills = VIOC_HA_KILLS getOrDefault [_id, 0];\n\tVIOC_HA_KILLS deleteAt _id;\n\tprivate _nDown = count _down;\n\tprivate _lostTxt = if (_nDown > 0) then {format [\"; %1 derribado%2\", _nDown, [\"s\", \"\"] select (_nDown == 1)]} else {\"\"};\n\tprivate _price = _e get \"price\";\n\tprivate _free = _e getOrDefault [\"free\", false];\n\tprivate _cd = VIOC_ASS_HA_CD;\n\tprivate _msg = \"\";\n\tswitch (_why) do {\n\t\tcase \"lost\": {\n\t\t\t_cd = VIOC_ASS_HA_CD_LOST;\n\t\t\t_msg = format [\"Derribaron los %1 helicopteros (%2 enemigos abatidos). Los proximos estaran disponibles en %3.\", count _helis, _kills, [_cd] call VIOC_AS_fnc_time];\n\t\t};\n\t\tcase \"time\": {_msg = format [\"Helicopteros: ataque terminado (%1 enemigos abatidos%2); regresan a base.\", _kills, _lostTxt]};\n\t\tcase \"gone\": {_msg = format [\"Los helicopteros regresan a base antes de tiempo, danados o sin municion (%1 enemigos abatidos%2).\", _kills, _lostTxt]};\n\t\tcase \"forced\": {_msg = format [\"Los helicopteros regresan a base (terminado desde la consola; %1 enemigos abatidos).\", _kills]};\n\t\tcase \"noarrive\": {\n\t\t\t_cd = 0;\n\t\t\t_msg = format [\"Los helicopteros no llegaron al blanco: se cancela y se te devolvieron los %1.\", _price];\n\t\t\t[_e, _price] call VIOC_AS_fnc_refund;\n\t\t};\n\t\tdefault {_cd = 0; _msg = \"Los helicopteros regresan a base (la partida termino).\"};\n\t};\n\tif (_free) then {_cd = 0};\n\t[\"heli\", _side, _cd, [\"done\", \"lost\"] select (_why == \"lost\")] call VIOC_AS_fnc_setCD;\n\t[_uid, _msg, [\"heli\", _cd]] call VIOC_AS_fnc_note;\n\tif (_why == \"lost\") then {[_side, format [\"Derribaron los helicopteros pedidos por %1; habra otros en %2.\", _pname, [_cd] call VIOC_AS_fnc_time]] call VIOC_AS_fnc_sideSay};\n\tformat [\"Helicopteros de %1 (%2): fin '%3', %4 abatidos, %5 de %6 derribados\", _pname, _side, _why, _kills, _nDown, count _helis] call VIOC_AS_fnc_log;\n\tVIOC_ASS_ACTIVE = VIOC_ASS_ACTIVE select {(_x get \"id\") != _id};\n\t{\n\t\tif (!(_x in _gone) && {!(_x in _down)}) then {[_x, _grps select (_helis find _x), _pos, _side] call VIOC_HA_fnc_home};\n\t} forEach _helis;\n};\n\n//--- Consola: los helicopteros de ese bando se van ya.\nVIOC_HA_fnc_end = {\n\tparams [[\"_side\", west]];\n\t{if (((_x get \"kind\") == \"heli\") && {(_x get \"side\") == _side}) then {_x set [\"end\", true]}} forEach VIOC_ASS_ACTIVE;\n\t\"orden de regreso enviada\"\n};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t    cuando no hay jugadores cerca.\n\tSolo servidor. El cliente (panel del mapa) esta en VIOC_air_support.sqf.\n",
+   "text": "\t    cuando no hay jugadores cerca.\n\t  - v3 (parche heli_attack, 2026-11-05): HELICOPTEROS: 3 helicopteros de ataque del bando (AH-64D Apache; Rusia\n\t    Mi-28N / Ka-52 / Mi-24) llegan, atacan unos minutos a los enemigos alrededor del punto marcado (infanteria\n\t    primero) y se van. La logica esta en VIOC_heli_attack.sqf (VIOC_HA_fnc_launch); aqui solo el tipo \"heli\".\n\tSolo servidor. El cliente (panel del mapa) esta en VIOC_air_support.sqf.\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "VIOC_ASS_GS_CD_LOST = ([\"VIOC_GUNSHIP_LOST_COOLDOWN\", 30, 0, 180] call VIOC_AS_fnc_param) * 60;\n\n",
+   "text": "VIOC_ASS_GS_CD_LOST = ([\"VIOC_GUNSHIP_LOST_COOLDOWN\", 30, 0, 180] call VIOC_AS_fnc_param) * 60;\n//--- v3 heli_attack: helicopteros de ataque\nVIOC_ASS_HA_ON = [\"VIOC_HELI_ATTACK\", 1, 0, 1] call VIOC_AS_fnc_param;\nVIOC_ASS_HA_PRICE = [\"VIOC_HELI_PRICE\", 9000, 0, 1000000] call VIOC_AS_fnc_param;\nVIOC_ASS_HA_CD = ([\"VIOC_HELI_COOLDOWN\", 12, 0, 120] call VIOC_AS_fnc_param) * 60;\nVIOC_ASS_HA_CD_LOST = ([\"VIOC_HELI_LOST_COOLDOWN\", 30, 0, 180] call VIOC_AS_fnc_param) * 60;\t//--- espera si los derriban a todos\nVIOC_ASS_HA_LIFE = ([\"VIOC_HELI_DURATION\", 5, 1, 30] call VIOC_AS_fnc_param) * 60;\t//--- s sobre la zona desde que llega el primero\nVIOC_ASS_HA_N = 3;\t\t\t//--- helicopteros por ataque\nVIOC_ASS_HA_ZONE = 300;\t\t//--- m alrededor del blanco donde buscan enemigos\nVIOC_ASS_HA_DANGER = 40;\t//--- m: no se puede pedir con tropas propias a menos de esto del punto marcado\n\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "VIOC_ASS_CLASS = [[\"\", \"\"], [\"\", \"\"]];\t//--- [[A-10 oeste, A-10 este], [Ghostrider oeste, Ghostrider este]]\n",
+   "text": "VIOC_ASS_CLASS = [[\"\", \"\"], [\"\", \"\"], [\"\", \"\"]];\t//--- [[A-10 oeste, A-10 este], [Ghostrider oeste, Ghostrider este], [helicoptero oeste, este]]\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "VIOC_AS_fnc_resetCD = {VIOC_ASS_CD = []; \"esperas borradas\"};\n\n",
+   "text": "VIOC_AS_fnc_resetCD = {VIOC_ASS_CD = []; \"esperas borradas\"};\n\n//--- v3: devuelve _amount del pedido _e a quien lo pago (nada si fue gratis). \"aipay\" = lo pago la IA (ai_air_support).\nVIOC_AS_fnc_refund = {\n\tparams [\"_e\", \"_amount\"];\n\tif (_amount <= 0 || {_e getOrDefault [\"free\", false]}) exitWith {};\n\tprivate _ai = _e getOrDefault [\"aipay\", []];\n\tif (count _ai > 0) exitWith {if (!isNil \"VIOC_fnc_soCharge\") then {[_e get \"side\", _ai, _amount] call VIOC_fnc_soCharge}};\n\t[_e get \"pgrp\", _e get \"side\", _amount] call CTI_CO_FNC_ChangeFunds;\n};\n\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\tcase (_nat == \"RU\" && {_kind == 0}): {if (_rhs) then {[\"RHS_Su25SM_vvs\", \"CUP_O_Su25_Dyn_RU\", \"O_Plane_CAS_02_dynamicLoadout_F\"]} else {[\"CUP_O_Su25_Dyn_RU\", \"RHS_Su25SM_vvs\", \"O_Plane_CAS_02_dynamicLoadout_F\"]}};\n\t\tdefault {[]};\n",
+   "text": "\t\tcase (_nat == \"RU\" && {_kind == 0}): {if (_rhs) then {[\"RHS_Su25SM_vvs\", \"CUP_O_Su25_Dyn_RU\", \"O_Plane_CAS_02_dynamicLoadout_F\"]} else {[\"CUP_O_Su25_Dyn_RU\", \"RHS_Su25SM_vvs\", \"O_Plane_CAS_02_dynamicLoadout_F\"]}};\n\t\t//--- v3 heli_attack: _kind 2 = helicoptero de ataque (Colombia usa el de EE. UU.: _nat \"US\")\n\t\tcase (_nat == \"US\" && {_kind == 2}): {if (_rhs) then {[\"RHS_AH64D_wd\", \"RHS_AH64D\", \"CUP_B_AH64D_DL_USA\", \"B_Heli_Attack_01_dynamicLoadout_F\"]} else {[\"CUP_B_AH64D_DL_USA\", \"RHS_AH64D_wd\", \"RHS_AH64D\", \"B_Heli_Attack_01_dynamicLoadout_F\"]}};\n\t\tcase (_nat == \"RU\" && {_kind == 2}): {if (_rhs) then {[\"rhs_mi28n_vvs\", \"RHS_Ka52_vvs\", \"RHS_Mi24P_vvs\", \"CUP_O_Ka52_RU\", \"CUP_O_Mi24_P_Dynamic_RU\", \"O_Heli_Attack_02_dynamicLoadout_F\"]} else {[\"CUP_O_Ka52_RU\", \"CUP_O_Mi24_P_Dynamic_RU\", \"rhs_mi28n_vvs\", \"RHS_Ka52_vvs\", \"O_Heli_Attack_02_dynamicLoadout_F\"]}};\n\t\tdefault {[]};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\tif (isClass _cfg && {getNumber (_cfg >> \"scope\") >= 2} && {(configName _cfg) isKindOf \"Plane\"} && {!([configName _cfg] call VIOC_AS_fnc_banned)}) then {\n",
+   "text": "\t\tif (isClass _cfg && {getNumber (_cfg >> \"scope\") >= 2} && {(configName _cfg) isKindOf ([\"Plane\", \"Helicopter\"] select (_kind == 2))} && {!([configName _cfg] call VIOC_AS_fnc_banned)}) then {\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\tif (_price > 0 && {!(_e getOrDefault [\"free\", false])}) then {[_e get \"pgrp\", _side, _price] call CTI_CO_FNC_ChangeFunds};\n",
+   "text": "\t\t[_e, _price] call VIOC_AS_fnc_refund;\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\t\tif (_price > 0 && {!_free}) then {[_e get \"pgrp\", _side, _price] call CTI_CO_FNC_ChangeFunds};\n",
+   "text": "\t\t\t[_e, _price] call VIOC_AS_fnc_refund;\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\t((_x get \"state\") == \"spawning\" && {time < ((_x get \"t0\") + 60)}) || {!isNull _p && {alive _p}} || {time < ((_x get \"t0\") + 120)}\n",
+   "text": "\t\t((_x get \"state\") == \"spawning\" && {time < ((_x get \"t0\") + 60)}) || {!isNull _p && {alive _p}} || {time < ((_x get \"t0\") + 120)} || {((_x getOrDefault [\"helis\", []]) findIf {alive _x}) >= 0}\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _ki = [\"cas\", \"gs\"] find _kind;\n",
+   "text": "\tprivate _ki = [\"cas\", \"gs\", \"heli\"] find _kind;\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _cls = (VIOC_ASS_CLASS select _ki) select _si;\n\tif (_cls == \"\") exitWith {if (_ki == 0) then {\"tu bando no tiene avion de ataque (A-10) en este escenario\"} else {\"tu bando no tiene canonero (Ghostrider) en este escenario\"}};\n",
+   "text": "\tprivate _cls = ((VIOC_ASS_CLASS param [_ki, []]) param [_si, \"\"]);\n\tif (_cls == \"\") exitWith {[\"tu bando no tiene avion de ataque (A-10) en este escenario\", \"tu bando no tiene canonero (Ghostrider) en este escenario\", \"tu bando no tiene helicopteros de ataque en este escenario\"] select _ki};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _dn = if (_ki == 1) then {\"Ghostrider\"} else {getText (configFile >> \"CfgVehicles\" >> _cls >> \"displayName\")};\n\tif (_ki == 0 && {(_mode < 0) || {_mode > 3} || {!(((VIOC_ASS_MODES select _si) select _mode) isEqualTo true)}}) exitWith {format [\"el %1 no lleva armas para ese tipo de ataque\", _dn]};\n",
+   "text": "\tprivate _dn = if (_ki == 1) then {\"Ghostrider\"} else {getText (configFile >> \"CfgVehicles\" >> _cls >> \"displayName\")};\n\tif (_ki == 2) then {_dn = \"ataque de helicopteros\"};\n\tif (_ki == 0 && {(_mode < 0) || {_mode > 3} || {!(((VIOC_ASS_MODES select _si) select _mode) isEqualTo true)}}) exitWith {format [\"el %1 no lleva armas para ese tipo de ataque\", _dn]};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tif (isNil \"_ncrew\" || {!(_ncrew isEqualType 0)}) then {_ncrew = 2};\n\tif (!_free && {!([_ncrew max 1] call VIOC_AS_fnc_perfOk)}) exitWith {\"ahora hay demasiada IA en la partida (presupuesto VIOC_PERF_AI_MAX); prueba mas tarde\"};\n",
+   "text": "\tif (isNil \"_ncrew\" || {!(_ncrew isEqualType 0)}) then {_ncrew = 2};\n\tif (_ki == 2) then {_ncrew = (_ncrew max 1) * VIOC_ASS_HA_N};\n\tif (!_free && {!([_ncrew max 1] call VIOC_AS_fnc_perfOk)}) exitWith {\"ahora hay demasiada IA en la partida (presupuesto VIOC_PERF_AI_MAX); prueba mas tarde\"};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _danger = if (_ki == 0 && {_mode == 2}) then {VIOC_ASS_DANGER_BOMB} else {VIOC_ASS_DANGER};\n\tif (!_test && {[_pos, _side, _danger] call VIOC_AS_fnc_friendlyNear}) exitWith {format [\"hay tropas propias (o tu) a menos de %1 m del blanco: marca un punto mas lejos\", _danger]};\n",
+   "text": "\tprivate _danger = if (_ki == 0 && {_mode == 2}) then {VIOC_ASS_DANGER_BOMB} else {VIOC_ASS_DANGER};\n\tif (_ki == 2) then {_danger = VIOC_ASS_HA_DANGER};\n\tif (!_test && {[_pos, _side, _danger] call VIOC_AS_fnc_friendlyNear}) exitWith {format [\"hay tropas propias (o tu) a menos de %1 m del blanco: marca un punto mas lejos\", _danger]};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _price = if (_free) then {0} else {[VIOC_ASS_CAS_PRICE, VIOC_ASS_GS_PRICE] select _ki};\n",
+   "text": "\tprivate _price = if (_free) then {0} else {[VIOC_ASS_CAS_PRICE, VIOC_ASS_GS_PRICE, VIOC_ASS_HA_PRICE] select _ki};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tif (!_paid) exitWith {format [\"no te alcanza: cuesta %1 y tienes %2\", _price, round _funds]};\n\t//--- creacion del avion\n",
+   "text": "\tif (!_paid) exitWith {format [\"no te alcanza: cuesta %1 y tienes %2\", _price, round _funds]};\n\t//--- v3 heli_attack: los helicopteros los crea y los lleva VIOC_HA_fnc_launch (VIOC_heli_attack.sqf); devuelve \"ok\" o el motivo\n\tif (_ki == 2) exitWith {[_e, _player, _pos] call VIOC_HA_fnc_launch};\n\t//--- creacion del avion\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\tif (_price > 0) then {[_grp, _side, _price] call CTI_CO_FNC_ChangeFunds};\n",
+   "text": "\t\t[_e, _price] call VIOC_AS_fnc_refund;\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t[[_cas, _cc select 0, _gi >= 0, _gc select 0, _gc select 1, _mine, _cen, _aim, _R]] remoteExecCall [\"VIOC_ASR_fnc_status\", _player];\n",
+   "text": "\t//--- v3 heli_attack: [.., ataque de helicopteros activo, espera s, motivo] (posiciones 9-11)\n\tprivate _hb = (VIOC_ASS_ACTIVE findIf {((_x get \"kind\") == \"heli\") && {(_x get \"side\") == _side}}) >= 0;\n\tprivate _hc = [\"heli\", _side] call VIOC_AS_fnc_cdLeft;\n\t[[_cas, _cc select 0, _gi >= 0, _gc select 0, _gc select 1, _mine, _cen, _aim, _R, _hb, _hc select 0, _hc select 1]] remoteExecCall [\"VIOC_ASR_fnc_status\", _player];\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t{_l pushBack format [\"- espera %1 %2: %3 s (%4)\", _x select 0, _x select 1, round (((_x select 2) - time) max 0), _x select 3]} forEach VIOC_ASS_CD;\n\tif (!isNil \"VIOC_GRG_fnc_diag\") then {_l pushBack (call VIOC_GRG_fnc_diag)};\n",
+   "text": "\t{_l pushBack format [\"- espera %1 %2: %3 s (%4)\", _x select 0, _x select 1, round (((_x select 2) - time) max 0), _x select 3]} forEach VIOC_ASS_CD;\n\t_l pushBack format [\"Helicopteros (v3): oeste %1 / este %2, %3 por ataque, precio %4, %5 s de ataque, espera %6 min (%7 min si caen todos).\", (VIOC_ASS_CLASS param [2, []]) param [0, \"\"], (VIOC_ASS_CLASS param [2, []]) param [1, \"\"], VIOC_ASS_HA_N, VIOC_ASS_HA_PRICE, VIOC_ASS_HA_LIFE, round (VIOC_ASS_HA_CD / 60), round (VIOC_ASS_HA_CD_LOST / 60)];\n\tif (!isNil \"VIOC_GRG_fnc_diag\") then {_l pushBack (call VIOC_GRG_fnc_diag)};\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tVIOC_ASS_CLASS = [0, 1] apply {\n",
+   "text": "\tVIOC_ASS_CLASS = [0, 1, 2] apply {\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\t\t[west, east] apply {if (VIOC_ASS_MODE > 0) then {[_x, _k] call VIOC_AS_fnc_pickClass} else {\"\"}}\n",
+   "text": "\t\t[west, east] apply {if (VIOC_ASS_MODE > 0 && {(_k < 2) || {VIOC_ASS_HA_ON > 0}}) then {[_x, _k] call VIOC_AS_fnc_pickClass} else {\"\"}}\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tVIOC_AS_CFG = [VIOC_ASS_MODE > 0, VIOC_ASS_CLASS, _dn, VIOC_ASS_MODES, VIOC_ASS_CAS_PRICE, VIOC_ASS_GS_PRICE, VIOC_ASS_GS_LIFE, VIOC_ASS_CAS_CD, VIOC_ASS_GS_CD, VIOC_ASS_GS_CD_LOST, VIOC_ASS_GS_R, VIOC_ASS_DANGER, VIOC_ASS_GS_ALT, VIOC_ASS_DANGER_BOMB];\n",
+   "text": "\tVIOC_AS_CFG = [VIOC_ASS_MODE > 0, VIOC_ASS_CLASS, _dn, VIOC_ASS_MODES, VIOC_ASS_CAS_PRICE, VIOC_ASS_GS_PRICE, VIOC_ASS_GS_LIFE, VIOC_ASS_CAS_CD, VIOC_ASS_GS_CD, VIOC_ASS_GS_CD_LOST, VIOC_ASS_GS_R, VIOC_ASS_DANGER, VIOC_ASS_GS_ALT, VIOC_ASS_DANGER_BOMB,\n\t\tVIOC_ASS_HA_PRICE, VIOC_ASS_HA_LIFE, VIOC_ASS_HA_CD, VIOC_ASS_HA_CD_LOST, VIOC_ASS_HA_N, VIOC_ASS_HA_ZONE, VIOC_ASS_HA_DANGER];\t//--- v3: 14-20 helicopteros\n"
+  },
+  {
+   "file": "VIOC_air_support_server.sqf",
+   "action": "replace",
+   "anchor": "\tformat [\"activo: modo %1, A-10 %2 (modos %3), Ghostrider %4, 105 mm %5, 30 mm %6, precios %7 / %8\", VIOC_ASS_MODE, VIOC_ASS_CLASS select 0, VIOC_ASS_MODES, VIOC_ASS_CLASS select 1, VIOC_ASS_W105, VIOC_ASS_W30, VIOC_ASS_CAS_PRICE, VIOC_ASS_GS_PRICE] call VIOC_AS_fnc_log;\n};\n",
+   "text": "\tformat [\"activo: modo %1, A-10 %2 (modos %3), Ghostrider %4, 105 mm %5, 30 mm %6, precios %7 / %8\", VIOC_ASS_MODE, VIOC_ASS_CLASS select 0, VIOC_ASS_MODES, VIOC_ASS_CLASS select 1, VIOC_ASS_W105, VIOC_ASS_W30, VIOC_ASS_CAS_PRICE, VIOC_ASS_GS_PRICE] call VIOC_AS_fnc_log;\n};\n\n//--- v3 heli_attack: helicopteros de ataque (funciones VIOC_HA_fnc_*; las usa VIOC_AS_fnc_requestDo)\ncall compile preprocessFileLineNumbers \"VIOC_heli_attack.sqf\";\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t  circulo de la orbita). Marcadores solo tuyos: orbita y blanco del Ghostrider, blanco del A-10.\n\tSolo cliente (hasInterface). Datos del servidor en VIOC_AS_CFG.\n",
+   "text": "\t  circulo de la orbita). Marcadores solo tuyos: orbita y blanco del Ghostrider, blanco del A-10.\n\t  v3 (parche heli_attack, 2026-11-05): tercer boton HELICOPTEROS: 3 helicopteros de ataque llegan, atacan unos minutos\n\t  a los enemigos alrededor del punto marcado (circulo naranja) y se van (servidor: VIOC_heli_attack.sqf).\n\tSolo cliente (hasInterface). Datos del servidor en VIOC_AS_CFG.\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "VIOC_ASR_CASM = \"vioc_asr_cas\";\n\n",
+   "text": "VIOC_ASR_CASM = \"vioc_asr_cas\";\nVIOC_ASR_HAM = \"vioc_asr_ha\";\t//--- v3: blanco y zona de tus helicopteros\nVIOC_ASR_HAZ = \"vioc_asr_haz\";\nVIOC_ASR_MKH = \"vioc_asr_th\";\t//--- v3: zona prevista al hacer clic\nVIOC_ASR_KINDS = [\"cas\", \"gs\", \"heli\"];\n\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "VIOC_ASR_fnc_avail = {(([0] call VIOC_ASR_fnc_cls) != \"\") || {([1] call VIOC_ASR_fnc_cls) != \"\"}};\n",
+   "text": "VIOC_ASR_fnc_avail = {(([0] call VIOC_ASR_fnc_cls) != \"\") || {([1] call VIOC_ASR_fnc_cls) != \"\"} || {([2] call VIOC_ASR_fnc_cls) != \"\"}};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _el = time - VIOC_ASR_ST_T;\n\t[(VIOC_ASR_ST select (_k * 2)) isEqualTo true, ((VIOC_ASR_ST select (_k * 2 + 1)) - _el) max 0, if (_k == 1) then {VIOC_ASR_ST select 4} else {\"\"}]\n",
+   "text": "\tprivate _el = time - VIOC_ASR_ST_T;\n\tif (_k == 2) exitWith {[(VIOC_ASR_ST param [9, false]) isEqualTo true, ((VIOC_ASR_ST param [10, 0]) - _el) max 0, VIOC_ASR_ST param [11, \"\"]]};\t//--- v3\n\t[(VIOC_ASR_ST select (_k * 2)) isEqualTo true, ((VIOC_ASR_ST select (_k * 2 + 1)) - _el) max 0, if (_k == 1) then {VIOC_ASR_ST select 4} else {\"\"}]\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tif (VIOC_ASR_RE) exitWith {};\n\tprivate _k = [\"cas\", \"gs\"] find VIOC_ASR_KIND;\n\tprivate _cls = [_k] call VIOC_ASR_fnc_cls;\n",
+   "text": "\tif (VIOC_ASR_RE) exitWith {};\n\tprivate _k = (VIOC_ASR_KINDS find VIOC_ASR_KIND) max 0;\n\tprivate _cls = [_k] call VIOC_ASR_fnc_cls;\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _cls = [_k] call VIOC_ASR_fnc_cls;\n\tprivate _price = [[4, 6000] call VIOC_ASR_fnc_c, [5, 12000] call VIOC_ASR_fnc_c] select _k;\n\tprivate _funds = call CTI_CL_FNC_GetPlayerFunds;\n",
+   "text": "\tprivate _cls = [_k] call VIOC_ASR_fnc_cls;\n\tprivate _price = [[4, 6000] call VIOC_ASR_fnc_c, [5, 12000] call VIOC_ASR_fnc_c, [14, 9000] call VIOC_ASR_fnc_c] select _k;\n\tprivate _funds = call CTI_CL_FNC_GetPlayerFunds;\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tif (isNil \"_funds\" || {!(_funds isEqualType 0)}) then {_funds = 0};\n\tif (_cls == \"\") then {\n",
+   "text": "\tif (isNil \"_funds\" || {!(_funds isEqualType 0)}) then {_funds = 0};\n\tif (_k == 2) then {_danger = [20, 40] call VIOC_ASR_fnc_c};\n\tif (_cls == \"\") then {\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\t_l pushBack format [\"<t color='#F56363'>Tu bando no tiene %1 en este escenario.</t>\", [\"avion de ataque (A-10)\", \"canonero (Ghostrider)\"] select _k];\n",
+   "text": "\t\t_l pushBack format [\"<t color='#F56363'>Tu bando no tiene %1 en este escenario.</t>\", [\"avion de ataque (A-10)\", \"canonero (Ghostrider)\", \"helicopteros de ataque\"] select _k];\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t} else {\n\t\tif (_k == 0) then {\n",
+   "text": "\t} else {\n\t\tif (_k == 2) then {\n\t\t\t_l pushBack format [\"<t color='#9fd3ff'>Helicopteros:</t> %1 x %2\", [18, 3] call VIOC_ASR_fnc_c, [_cls] call VIOC_ASR_fnc_name];\n\t\t\t_l pushBack format [\"<t color='#9fd3ff'>Ataque:</t> %1 min sobre la zona (circulo naranja de %2 m), infanteria primero\", round (([15, 300] call VIOC_ASR_fnc_c) / 60), [19, 300] call VIOC_ASR_fnc_c];\n\t\t} else {\n\t\tif (_k == 0) then {\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\t\t_l pushBack format [\"<t color='#9fd3ff'>Orbita:</t> circulo de %1 m a %2 m de altura; fuego %3 min\", _R, [12, 2500] call VIOC_ASR_fnc_c, round (([6, 300] call VIOC_ASR_fnc_c) / 60)];\n\t\t};\n\t};\n\t_l pushBack format [\"<t color='#9fd3ff'>Blanco:</t> %1\", if (count VIOC_ASR_POS < 2) then {\"<t color='#F5D363'>haz clic en el mapa (o DONDE MIRO)</t>\"} else {format [\"cuadricula %1\", mapGridPosition VIOC_ASR_POS]}];\n",
+   "text": "\t\t\t_l pushBack format [\"<t color='#9fd3ff'>Orbita:</t> circulo de %1 m a %2 m de altura; fuego %3 min\", _R, [12, 2500] call VIOC_ASR_fnc_c, round (([6, 300] call VIOC_ASR_fnc_c) / 60)];\n\t\t};\n\t\t};\n\t};\n\t_l pushBack format [\"<t color='#9fd3ff'>Blanco:</t> %1\", if (count VIOC_ASR_POS < 2) then {\"<t color='#F5D363'>haz clic en el mapa (o DONDE MIRO)</t>\"} else {format [\"cuadricula %1\", mapGridPosition VIOC_ASR_POS]}];\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t_l pushBack format [\"<t color='#9fd3ff'>Llega:</t> %1\", [\"unos 25 s despues de confirmar\", \"en 1-2 min\"] select _k];\n",
+   "text": "\t_l pushBack format [\"<t color='#9fd3ff'>Llega:</t> %1\", [\"unos 25 s despues de confirmar\", \"en 1-2 min\", \"en 1-2 min\"] select _k];\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\tcase (_busy): {format [\"<t color='#F5D363'>Tu bando ya tiene un %1 en el aire (uno por bando).</t>\", [\"A-10\", \"Ghostrider\"] select _k]};\n",
+   "text": "\t\tcase (_busy): {format [\"<t color='#F5D363'>Tu bando ya tiene %1 en el aire (uno por bando).</t>\", [\"un A-10\", \"un Ghostrider\", \"un ataque de helicopteros\"] select _k]};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t_l pushBack format [\"<t color='#aaaaaa'>%1</t>\", if (_k == 0) then {format [\"No dispara si hay tropas propias a menos de %1 m del blanco (%2 m con bombas). Espera del bando despues: %3 min.\", _danger, [13, 100] call VIOC_ASR_fnc_c, round (([7, 600] call VIOC_ASR_fnc_c) / 60)]} else {format [\"Busca enemigos a menos de 150 m del blanco; no dispara a menos de %1 m de tropas propias. Cambia el blanco con la accion GHOSTRIDER: nuevo blanco. Espera despues: %2 min (%3 min si lo derriban).\", _danger, round (([8, 900] call VIOC_ASR_fnc_c) / 60), round (([9, 1800] call VIOC_ASR_fnc_c) / 60)]}];\n",
+   "text": "\t_l pushBack format [\"<t color='#aaaaaa'>%1</t>\", if (_k == 2) then {format [\"La IA de los helicopteros elige sus blancos dentro de la zona; no se pide con tropas propias a menos de %1 m del punto (cuidado si estas cerca). Se les puede derribar. Espera despues: %2 min (%3 min si caen todos).\", _danger, round (([16, 720] call VIOC_ASR_fnc_c) / 60), round (([17, 1800] call VIOC_ASR_fnc_c) / 60)]} else {if (_k == 0) then {format [\"No dispara si hay tropas propias a menos de %1 m del blanco (%2 m con bombas). Espera del bando despues: %3 min.\", _danger, [13, 100] call VIOC_ASR_fnc_c, round (([7, 600] call VIOC_ASR_fnc_c) / 60)]} else {format [\"Busca enemigos a menos de 150 m del blanco; no dispara a menos de %1 m de tropas propias. Cambia el blanco con la accion GHOSTRIDER: nuevo blanco. Espera despues: %2 min (%3 min si lo derriban).\", _danger, round (([8, 900] call VIOC_ASR_fnc_c) / 60), round (([9, 1800] call VIOC_ASR_fnc_c) / 60)]}}];\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\t_x ctrlSetBackgroundColor (if (!_ok) then {_na} else {if (([\"cas\", \"gs\"] select _forEachIndex) == VIOC_ASR_KIND) then {_on} else {_off}});\n",
+   "text": "\t\t_x ctrlSetBackgroundColor (if (!_ok) then {_na} else {if ((VIOC_ASR_KINDS select _forEachIndex) == VIOC_ASR_KIND) then {_on} else {_off}});\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tif (([\"cas\", \"gs\"] find _k) < 0 || {([[\"cas\", \"gs\"] find _k] call VIOC_ASR_fnc_cls) == \"\"}) exitWith {};\n",
+   "text": "\tif ((VIOC_ASR_KINDS find _k) < 0 || {([VIOC_ASR_KINDS find _k] call VIOC_ASR_fnc_cls) == \"\"}) exitWith {};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tdeleteMarkerLocal VIOC_ASR_MKO;\n\tprivate _gs = VIOC_ASR_RE || {VIOC_ASR_KIND == \"gs\"};\n",
+   "text": "\tdeleteMarkerLocal VIOC_ASR_MKO;\n\tdeleteMarkerLocal VIOC_ASR_MKH;\n\tprivate _gs = VIOC_ASR_RE || {VIOC_ASR_KIND == \"gs\"};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _gs = VIOC_ASR_RE || {VIOC_ASR_KIND == \"gs\"};\n\tprivate _dg = if (!_gs && {VIOC_ASR_MODE == 2}) then {[13, 100] call VIOC_ASR_fnc_c} else {[11, 75] call VIOC_ASR_fnc_c};\n",
+   "text": "\tprivate _gs = VIOC_ASR_RE || {VIOC_ASR_KIND == \"gs\"};\n\tprivate _ha = !VIOC_ASR_RE && {VIOC_ASR_KIND == \"heli\"};\t//--- v3\n\tprivate _dg = if (!_gs && {VIOC_ASR_MODE == 2}) then {[13, 100] call VIOC_ASR_fnc_c} else {[11, 75] call VIOC_ASR_fnc_c};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _dg = if (!_gs && {VIOC_ASR_MODE == 2}) then {[13, 100] call VIOC_ASR_fnc_c} else {[11, 75] call VIOC_ASR_fnc_c};\n\tprivate _z = createMarkerLocal [VIOC_ASR_MKD, VIOC_ASR_POS];\n",
+   "text": "\tprivate _dg = if (!_gs && {VIOC_ASR_MODE == 2}) then {[13, 100] call VIOC_ASR_fnc_c} else {[11, 75] call VIOC_ASR_fnc_c};\n\tif (_ha) then {\n\t\t_dg = [20, 40] call VIOC_ASR_fnc_c;\n\t\tprivate _zr = [19, 300] call VIOC_ASR_fnc_c;\n\t\tprivate _zh = createMarkerLocal [VIOC_ASR_MKH, VIOC_ASR_POS];\n\t\t_zh setMarkerShapeLocal \"ELLIPSE\";\n\t\t_zh setMarkerSizeLocal [_zr, _zr];\n\t\t_zh setMarkerBrushLocal \"Border\";\n\t\t_zh setMarkerColorLocal \"ColorOrange\";\n\t};\n\tprivate _z = createMarkerLocal [VIOC_ASR_MKD, VIOC_ASR_POS];\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t_m setMarkerTextLocal (if (VIOC_ASR_RE) then {\"Nuevo blanco (Ghostrider)\"} else {if (_gs) then {\"Blanco (Ghostrider)\"} else {\"Blanco (A-10)\"}});\n",
+   "text": "\t_m setMarkerTextLocal (if (VIOC_ASR_RE) then {\"Nuevo blanco (Ghostrider)\"} else {if (_gs) then {\"Blanco (Ghostrider)\"} else {if (_ha) then {\"Blanco (helicopteros)\"} else {\"Blanco (A-10)\"}}});\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _k = [\"cas\", \"gs\"] find VIOC_ASR_KIND;\n\tif (([_k] call VIOC_ASR_fnc_cls) == \"\") exitWith {hint \"Tu bando no tiene ese avion en este escenario.\"};\n",
+   "text": "\tprivate _k = VIOC_ASR_KINDS find VIOC_ASR_KIND;\n\tif (_k < 0 || {([_k] call VIOC_ASR_fnc_cls) == \"\"}) exitWith {hint \"Tu bando no tiene ese apoyo en este escenario.\"};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tif (_busy) exitWith {hint format [\"Tu bando ya tiene un %1 en el aire (uno por bando).\", [\"A-10\", \"Ghostrider\"] select _k]};\n",
+   "text": "\tif (_busy) exitWith {hint format [\"Tu bando ya tiene %1 en el aire (uno por bando).\", [\"un A-10\", \"un Ghostrider\", \"un ataque de helicopteros\"] select _k]};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tif (_cd > 0) exitWith {hint format [\"Todavia no: faltan %1 min.\", [_cd] call VIOC_ASR_fnc_mmss]};\n\tprivate _price = [[4, 6000] call VIOC_ASR_fnc_c, [5, 12000] call VIOC_ASR_fnc_c] select _k;\n\tprivate _funds = call CTI_CL_FNC_GetPlayerFunds;\n",
+   "text": "\tif (_cd > 0) exitWith {hint format [\"Todavia no: faltan %1 min.\", [_cd] call VIOC_ASR_fnc_mmss]};\n\tprivate _price = [[4, 6000] call VIOC_ASR_fnc_c, [5, 12000] call VIOC_ASR_fnc_c, [14, 9000] call VIOC_ASR_fnc_c] select _k;\n\tprivate _funds = call CTI_CL_FNC_GetPlayerFunds;\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tprivate _dg = if (_k == 0 && {VIOC_ASR_MODE == 2}) then {[13, 100] call VIOC_ASR_fnc_c} else {[11, 75] call VIOC_ASR_fnc_c};\n\tif ([VIOC_ASR_POS, _dg] call VIOC_ASR_fnc_friendlyNear) exitWith {hint format [\"Hay tropas propias (o tu) a menos de %1 m del blanco: marca un punto mas lejos.\", _dg]};\n",
+   "text": "\tprivate _dg = if (_k == 0 && {VIOC_ASR_MODE == 2}) then {[13, 100] call VIOC_ASR_fnc_c} else {[11, 75] call VIOC_ASR_fnc_c};\n\tif (_k == 2) then {_dg = [20, 40] call VIOC_ASR_fnc_c};\n\tif ([VIOC_ASR_POS, _dg] call VIOC_ASR_fnc_friendlyNear) exitWith {hint format [\"Hay tropas propias (o tu) a menos de %1 m del blanco: marca un punto mas lejos.\", _dg]};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\t\"<t size='1.05' color='#ffb27f'>PEDIR APOYO AEREO</t><br/><t size='0.8'>Elige el avion, el tipo de ataque y haz clic en el blanco. Se paga con TUS fondos.</t>\"\n",
+   "text": "\t\t\"<t size='1.05' color='#ffb27f'>PEDIR APOYO AEREO</t><br/><t size='0.8'>Elige el apoyo (avion o helicopteros), el tipo de ataque y haz clic en el blanco. Se paga con TUS fondos.</t>\"\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\tVIOC_ASR_BK pushBack ([[_x0 + _p, _y, _b2, _lh * 1.15], if (_n0 == \"\") then {\"A-10\"} else {toUpper getText (configFile >> \"CfgVehicles\" >> _n0 >> \"displayName\")}, \"with missionNamespace do {['cas'] call VIOC_ASR_fnc_setKind}\"] call _btn);\n\t\tVIOC_ASR_BK pushBack ([[_x0 + _p * 2 + _b2, _y, _b2, _lh * 1.15], \"GHOSTRIDER\", \"with missionNamespace do {['gs'] call VIOC_ASR_fnc_setKind}\"] call _btn);\n",
+   "text": "\t\t//--- v3: tres botones (A-10 / GHOSTRIDER / HELICOPTEROS)\n\t\tVIOC_ASR_BK pushBack ([[_x0 + _p, _y, _b3, _lh * 1.15], if (_n0 == \"\") then {\"A-10\"} else {toUpper getText (configFile >> \"CfgVehicles\" >> _n0 >> \"displayName\")}, \"with missionNamespace do {['cas'] call VIOC_ASR_fnc_setKind}\"] call _btn);\n\t\tVIOC_ASR_BK pushBack ([[_x0 + _p * 2 + _b3, _y, _b3, _lh * 1.15], \"GHOSTRIDER\", \"with missionNamespace do {['gs'] call VIOC_ASR_fnc_setKind}\"] call _btn);\n\t\tVIOC_ASR_BK pushBack ([[_x0 + _p * 3 + _b3 * 2, _y, _b3, _lh * 1.15], \"HELICOPTEROS\", \"with missionNamespace do {['heli'] call VIOC_ASR_fnc_setKind}\"] call _btn);\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tdeleteMarkerLocal VIOC_ASR_MKO;\n\tVIOC_ASR_OPEN = false;\n",
+   "text": "\tdeleteMarkerLocal VIOC_ASR_MKO;\n\tdeleteMarkerLocal VIOC_ASR_MKH;\n\tVIOC_ASR_OPEN = false;\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tif (([\"cas\", \"gs\"] find VIOC_ASR_KIND) < 0 || {([[\"cas\", \"gs\"] find VIOC_ASR_KIND] call VIOC_ASR_fnc_cls) == \"\"}) then {VIOC_ASR_KIND = if (([0] call VIOC_ASR_fnc_cls) != \"\") then {\"cas\"} else {\"gs\"}};\n",
+   "text": "\tif ((VIOC_ASR_KINDS find VIOC_ASR_KIND) < 0 || {([VIOC_ASR_KINDS find VIOC_ASR_KIND] call VIOC_ASR_fnc_cls) == \"\"}) then {\n\t\tVIOC_ASR_KIND = VIOC_ASR_KINDS param [([0, 1, 2] findIf {([_x] call VIOC_ASR_fnc_cls) != \"\"}) max 0, \"cas\"];\n\t};\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\t\t};\n\t\tcase \"re\": {\n",
+   "text": "\t\t};\n\t\tcase \"heli\": {\t//--- v3: blanco y zona de tus helicopteros (solo tuyos)\n\t\t\tdeleteMarkerLocal VIOC_ASR_HAM;\n\t\t\tdeleteMarkerLocal VIOC_ASR_HAZ;\n\t\t\tif (count _c > 1) then {\n\t\t\t\tprivate _zr = _data param [3, [19, 300] call VIOC_ASR_fnc_c];\n\t\t\t\tprivate _z = createMarkerLocal [VIOC_ASR_HAZ, _c];\n\t\t\t\t_z setMarkerShapeLocal \"ELLIPSE\";\n\t\t\t\t_z setMarkerSizeLocal [_zr, _zr];\n\t\t\t\t_z setMarkerBrushLocal \"Border\";\n\t\t\t\t_z setMarkerColorLocal \"ColorOrange\";\n\t\t\t\tprivate _m = createMarkerLocal [VIOC_ASR_HAM, _c];\n\t\t\t\t_m setMarkerTypeLocal \"mil_destroy\";\n\t\t\t\t_m setMarkerColorLocal \"ColorOrange\";\n\t\t\t\t_m setMarkerTextLocal \"Helicopteros: blanco\";\n\t\t\t};\n\t\t\thint parseText format [\"<t size='1.1' color='#76F563'>Apoyo aereo: helicopteros</t><br/><br/><t align='left'>%1</t>\", _txt];\n\t\t};\n\t\tcase \"re\": {\n"
+  },
+  {
+   "file": "VIOC_air_support.sqf",
+   "action": "replace",
+   "anchor": "\tVIOC_ASR_ST = [];\n\tif ((_data select 0) == \"cas\") then {\n",
+   "text": "\tVIOC_ASR_ST = [];\n\tif ((_data select 0) == \"heli\") exitWith {\t//--- v3\n\t\tdeleteMarkerLocal VIOC_ASR_HAM;\n\t\tdeleteMarkerLocal VIOC_ASR_HAZ;\n\t};\n\tif ((_data select 0) == \"cas\") then {\n"
+  },
+  {
+   "file": "RSC/Parameters.hpp",
+   "action": "insert_before",
+   "anchor": "\tclass VIOC_GUNSHIP_GUN {",
+   "text": "\tclass VIOC_HELI_ATTACK {\n\t\ttitle = \"VIOC: Apoyo aereo: helicopteros de ataque (boton HELICOPTEROS: 3 helicopteros atacan la zona marcada unos minutos y se van)\";\n\t\tvalues[] = {0,1};\n\t\ttexts[] = {\"No\",\"Si\"};\n\t\tdefault = 1;\n\t};\n\tclass VIOC_HELI_PRICE {\n\t\ttitle = \"VIOC: Apoyo aereo: precio del ataque de helicopteros\";\n\t\tvalues[] = {6000,9000,14000};\n\t\ttexts[] = {\"6000\",\"9000\",\"14000\"};\n\t\tdefault = 9000;\n\t};\n\tclass VIOC_HELI_DURATION {\n\t\ttitle = \"VIOC: Apoyo aereo: minutos de ataque de los helicopteros sobre la zona\";\n\t\tvalues[] = {3,5,8};\n\t\ttexts[] = {\"3 min\",\"5 min\",\"8 min\"};\n\t\tdefault = 5;\n\t};\n\tclass VIOC_HELI_COOLDOWN {\n\t\ttitle = \"VIOC: Apoyo aereo: espera del bando para otro ataque de helicopteros\";\n\t\tvalues[] = {8,12,20};\n\t\ttexts[] = {\"8 min\",\"12 min\",\"20 min\"};\n\t\tdefault = 12;\n\t};\n\tclass VIOC_HELI_LOST_COOLDOWN {\n\t\ttitle = \"VIOC: Apoyo aereo: espera para otro ataque de helicopteros si derriban a los 3\";\n\t\tvalues[] = {15,30,45,60};\n\t\ttexts[] = {\"15 min\",\"30 min\",\"45 min\",\"60 min\"};\n\t\tdefault = 30;\n\t};\n"
+  }
+ ]
+}

@@ -1,0 +1,76 @@
+{
+ "name": "lb_join",
+ "description": "Operaciones especiales a pedido: 'Ir con ellos' tambien en el Little Bird (van 3 de la IA y el jugador).",
+ "purpose_es": "En el panel PEDIR: Operacion especial, con el tipo Little Bird se puede activar 'Ir con ellos (yo tambien)': el Little Bird lleva 3 de fuerzas especiales y al jugador (con su equipo), aterriza y bajan juntos. El precio es el de 3 soldados.",
+ "source": "work/v6_build/lb_join/",
+ "risks": "Toca el precio solo a traves del numero de soldados (3 en vez de 4, mismo cobro). El jugador sube a un banco (puesto de tirador) si no hay asiento de carga.",
+ "test_in_game_es": "Panel PEDIR: Operacion especial, tipo Little Bird, 'Ir con ellos: SI', clic en un objetivo y CONFIRMAR: subes al Little Bird con 3 soldados y bajas con ellos.",
+ "steps": [
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (_jump && {!(_want in [\"para\", \"heli\"])}) then {_want = \"para\"};\t//--- VIOC heli_join: tambien en helicoptero",
+   "text": "if (_jump && {!(_want in [\"para\", \"heli\", \"lb\"])}) then {_want = \"para\"};\t//--- VIOC heli_join: tambien en helicoptero (VIOC lb_join: y en Little Bird)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (_want == \"lb\") then {_size = VIOC_SO_LB_SIZE};\t//--- VIOC little_bird: caben 4 en los bancos",
+   "text": "if (_want == \"lb\") then {_size = VIOC_SO_LB_SIZE - (if (_jump) then {1} else {0})};\t//--- VIOC little_bird: caben 4 en los bancos (VIOC lb_join: si vas tu, 3 de la IA)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "//--- VIOC heli_join: asiento para el jugador\n\tif (_n < 4) exitWith {",
+   "text": "//--- VIOC heli_join: asiento para el jugador\n\tif (_n < (if (_lbo) then {3} else {4})) exitWith {\t//--- VIOC lb_join: en el Little Bird bastan 3 (cuando vas tu)"
+  },
+  {
+   "file": "VIOC_specops.sqf",
+   "action": "replace",
+   "anchor": "if (_jump) then {_after = _after + (if (_type == \"heli\") then {",
+   "text": "if (_jump) then {_after = _after + (if (_type in [\"heli\", \"lb\"]) then {"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "if (_type == \"lb\") then {_n = 4};\t//--- VIOC little_bird: 4 en los bancos",
+   "text": "if (_type == \"lb\") then {_n = if ((VIOC_SOR_SEL param [3, false]) && {(missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) > 0}) then {3} else {4}};\t//--- VIOC little_bird: 4 en los bancos (VIOC lb_join: 3 si vas tu)"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "if (_type == \"lb\") then {_n = 4};\t//--- VIOC little_bird",
+   "text": "if (_type == \"lb\") then {_n = if ((VIOC_SOR_SEL param [3, false]) && {(missionNamespace getVariable [\"VIOC_PARA_JOIN\", 1]) > 0}) then {3} else {4}};\t//--- VIOC little_bird (VIOC lb_join: 3 si vas tu)"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "Little Bird (%1): siempre 4 de fuerzas especiales; aterriza, bajan y se va.",
+   "text": "Little Bird (%1): 4 de fuerzas especiales (3 si vas con ellos); aterriza, bajan y se va."
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "if !(_i in [1, 2]) then {VIOC_SOR_SEL set [3, false]}; call VIOC_SOR_fnc_refresh};\t//--- VIOC heli_join: ir con ellos en paracaidistas o helicoptero",
+   "text": "if !(_i in [1, 2, 4]) then {VIOC_SOR_SEL set [3, false]}; call VIOC_SOR_fnc_refresh};\t//--- VIOC heli_join: ir con ellos en paracaidistas o helicoptero (VIOC lb_join: o Little Bird)"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "if ((VIOC_SOR_SEL select 3) && {!((VIOC_SOR_SEL select 0) in [1, 2])}) then {VIOC_SOR_SEL set [0, 1]};\t//--- VIOC heli_join: con Helicoptero se queda en Helicoptero",
+   "text": "if ((VIOC_SOR_SEL select 3) && {!((VIOC_SOR_SEL select 0) in [1, 2, 4])}) then {VIOC_SOR_SEL set [0, 1]};\t//--- VIOC heli_join: con Helicoptero se queda en Helicoptero (VIOC lb_join: y con Little Bird)"
+  },
+  {
+   "file": "VIOC_specops_request.sqf",
+   "action": "replace",
+   "anchor": "Helicoptero: vas con tu equipo y bajas con ellos al aterrizar",
+   "text": "Helicoptero o Little Bird: vas con tu equipo y bajas con ellos al aterrizar (en el Little Bird van 3 de la IA y tu)"
+  },
+  {
+   "file": "VIOC_para_join.sqf",
+   "action": "replace",
+   "anchor": "\tif (vehicle player != _veh && {alive _veh}) then {player moveInCargo _veh; sleep 0.5};\n\tif (vehicle player != _veh) exitWith {\n\t\tVIOC_PJ_RIDE = nil;",
+   "text": "\tif (vehicle player != _veh && {alive _veh}) then {player moveInCargo _veh; sleep 0.5};\n\tif (vehicle player != _veh && {alive _veh}) then {\t//--- VIOC lb_join: en el Little Bird los bancos son puestos de tirador (FFV), no \"Cargo\"\n\t\tprivate _ffv = (fullCrew [_veh, \"turret\", true]) select {isNull (_x select 0) && {(_x param [4, false]) isEqualTo true}};\n\t\tif (count _ffv > 0) then {player moveInTurret [_veh, (_ffv select 0) select 3]; sleep 0.5};\n\t};\n\tif (vehicle player != _veh) exitWith {\n\t\tVIOC_PJ_RIDE = nil;"
+  }
+ ]
+}
